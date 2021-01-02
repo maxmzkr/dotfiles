@@ -15,6 +15,7 @@ if dein#load_state('~/.cache/dein')
   call dein#add('sbdchd/neoformat')
   call dein#add('nvim-lua/lsp-status.nvim')
   call dein#add('dense-analysis/ale')
+  call dein#add('tpope/vim-fugitive')
 
   call dein#end()
   call dein#save_state()
