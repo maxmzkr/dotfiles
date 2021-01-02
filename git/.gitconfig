@@ -16,6 +16,9 @@
 	excludesfile = /home/wil/.gitignore_global
 	pager = diff-so-fancy | less --tabs=4 -RFX
 
+[pager]
+	diff = diff-so-fancy | less --tabs=4 -RFXS --pattern '^(Date|added|deleted|modified): '
+
 [url "ssh://git@github.com/"]
 	insteadOf = https://github.com/
 
@@ -36,10 +39,13 @@
 	undo = reset --soft HEAD~1
 	sub = submodule update --init --recursive
 	cp = cherry-pick
-	cl = clone
+	patch = !git --no-pager diff --no-colorcl = clone
 
 [commit]
 	gpgsign = true
 
 [gpg]
 	program = gpg
+
+[credential]
+	helper = /usr/lib/git-core/git-credential-libsecret

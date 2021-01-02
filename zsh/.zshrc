@@ -35,3 +35,19 @@ zstyle ':completion:*' verbose true
 
 zstyle ':completion:*:*:kill:*:processes' list-colors '=(#b) #([0-9]#)*=0=01;31'
 zstyle ':completion:*:kill:*' command 'ps -u $USER -o pid,%cpu,tty,cputime,cmd'
+
+# Keyring
+if [ -n "$SSH_CLIENT" ] || [ -n "$SSH_TTY" ]; then
+  eval $(gnome-keyring-daemon --start --components=ssh,secrets,gpg)
+  export SSH_AUTH_SOCK
+fi
+
+source /usr/share/zsh-antigen/antigen.zsh
+
+antigen use oh-my-zsh
+
+antigen bundle git
+
+antigen bundle zdharma/zsh-diff-so-fancy
+
+antigen apply
