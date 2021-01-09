@@ -16,6 +16,7 @@ if dein#load_state('~/.cache/dein')
   call dein#add('nvim-lua/lsp-status.nvim')
   call dein#add('dense-analysis/ale')
   call dein#add('tpope/vim-fugitive')
+  call dein#add('tpope/vim-rhubarb')
 
   call dein#end()
   call dein#save_state()
@@ -66,3 +67,7 @@ augroup fmt
   autocmd!
   autocmd BufWritePre * undojoin | Neoformat
 augroup END
+
+autocmd FileType yaml setlocal ts=2 sts=2 sw=2 expandtab
+
+set foldlevelstart=20
