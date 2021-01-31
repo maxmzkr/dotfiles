@@ -17,6 +17,8 @@ if dein#load_state('~/.cache/dein')
   call dein#add('dense-analysis/ale')
   call dein#add('tpope/vim-fugitive')
   call dein#add('tpope/vim-rhubarb')
+  call dein#add('junegunn/fzf', {'merged': 0})
+  call dein#add('junegunn/fzf.vim')
 
   call dein#end()
   call dein#save_state()
@@ -37,7 +39,60 @@ if executable('jedi-language-server')
   lua require'lspconfig'.jedi_language_server.setup{}
 endif
 
+lua <<EOF
+  lspconfig = require "lspconfig"
+  lspconfig.gopls.setup {
+    cmd = {"gopls"},
+    settings = {
+      gopls = {
+        analyses = {
+          unusedparams = true,
+        },
+        staticcheck = true,
+      },
+    },
+  }
+
+  function goimports(timeoutms)
+    local context = { source = { organizeImports = true, gofumpt = 1 } }
+    vim.validate { context = { context, "t", true } }
+
+    local params = vim.lsp.util.make_range_params()
+    params.context = context
+
+    local method = "textDocument/codeAction"
+    local resp = vim.lsp.buf_request_sync(0, method, params, timeoutms)
+    if resp and resp[1] then
+      local result = resp[1].result
+      if result and result[1] then
+        local edit = result[1].edit
+        vim.lsp.util.apply_workspace_edit(edit)
+      end
+    end
+
+    vim.lsp.buf.formatting()
+  end
+
+  do
+    local method = "textDocument/publishDiagnostics"
+    local default_callback = vim.lsp.callbacks[method]
+    vim.lsp.callbacks[method] = function(err, method, result, client_id)
+      default_callback(err, method, result, client_id)
+      if result and result.diagnostics then
+        for _, v in ipairs(result.diagnostics) do
+          v.bufnr = client_id
+          v.lnum = v.range.start.line + 1
+          v.col = v.range.start.character + 1
+          v.text = v.message
+        end
+        vim.lsp.util.set_qflist(result.diagnostics)
+      end
+    end
+  end
+EOF
+
 autocmd BufEnter * lua require'completion'.on_attach()
+autocmd BufWritePre *.go lua goimports(1000)
 
 " Use <Tab> and <S-Tab> to navigate through popup menu
 inoremap <expr> <Tab>   pumvisible() ? "\<C-n>" : "\<Tab>"

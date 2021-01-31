@@ -50,6 +50,9 @@ export GPG_TTY="${TTY}"
 #   export SSH_AUTH_SOCK
 # fi
 
+source /home/max/.gvm/scripts/gvm
+export PATH=$PATH:/usr/local/go/bin
+
 source /usr/share/zsh-antigen/antigen.zsh
 
 antigen use oh-my-zsh
@@ -64,3 +67,5 @@ antigen apply
 
 # To customize prompt, run `p10k configure` or edit ~/.p10k.zsh.
 [[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
+
+[ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
