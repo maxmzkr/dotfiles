@@ -19,6 +19,7 @@ if dein#load_state('~/.cache/dein')
   call dein#add('tpope/vim-rhubarb')
   call dein#add('junegunn/fzf', {'merged': 0})
   call dein#add('junegunn/fzf.vim', { 'depends': 'fzf' })
+  call dein#add('christoomey/vim-tmux-navigator')
 
   call dein#end()
   call dein#save_state()

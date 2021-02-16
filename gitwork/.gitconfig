@@ -1,7 +1,7 @@
 [user]
 	name = Max Mizikar
 	email = maxmzkr@censys.io
-	signingkey = 9581ABC95ECA522A73325C8CF3E332198FEC0FE7 
+	signingkey = B0F548BFF8012EB8A57DDBFB621DB2803E863893 
 
 [push]
 	default = simple

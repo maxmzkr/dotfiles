@@ -49,7 +49,7 @@ export GPG_TTY="${TTY}"
 #   eval $(gnome-keyring-daemon --start --components=ssh,secrets,gpg)
 #   export SSH_AUTH_SOCK
 # fi
-export SSH_AUTH_SOCK="${XDG_RUNTIME_DIR}/yubikey-agent/yubikey-agent.sock"
+export SSH_AUTH_SOCK=/run/user/1000/gnupg/S.gpg-agent.ssh
 
 source /home/max/.gvm/scripts/gvm
 export PATH=$PATH:/usr/local/go/bin
