@@ -1,5 +1,4 @@
-# Enable Powerlevel10k instant prompt. Should stay close to the top of ~/.zshrc.
-# Initialization code that may require console input (password prompts, [y/n]
+# Enable Powerlevel10k instant prompt. Should stay close to the top of ~/.zshrc.  Initialization code that may require console input (password prompts, [y/n]
 # confirmations, etc.) must go above this block; everything else may go below.
 if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]; then
   source "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh"
@@ -53,12 +52,37 @@ export SSH_AUTH_SOCK=/run/user/1000/gnupg/S.gpg-agent.ssh
 
 source /home/max/.gvm/scripts/gvm
 export PATH=$PATH:/usr/local/go/bin
+export PATH=$PATH:/home/max/.local/bin
+
+export NVM_DIR="$([ -z "${XDG_CONFIG_HOME-}" ] && printf %s "${HOME}/.nvm" || printf %s "${XDG_CONFIG_HOME}/nvm")"
+[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" # This loads nvm
 
 # To customize prompt, run `p10k configure` or edit ~/.p10k.zsh.
 [[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
 
 export DEBFULLNAME="Max Mizikar"
 export DEBEMAIL="maxmzkr@gmail.com"
+
+# Uses the command-not-found package zsh support
+# as seen in https://www.porcheron.info/command-not-found-for-zsh/
+# this is installed in Ubuntu
+
+if [ -x /usr/lib/command-not-found -o -x /usr/share/command-not-found/command-not-found ]; then
+    function command_not_found_handler {
+        # check because c-n-f could've been removed in the meantime
+        if [ -x /usr/lib/command-not-found ]; then
+            /usr/lib/command-not-found -- "$1"
+            return $?
+        elif [ -x /usr/share/command-not-found/command-not-found ]; then
+            /usr/share/command-not-found/command-not-found -- "$1"
+            return $?
+        else
+            printf "zsh: command not found: %s\n" "$1" >&2
+            return 127
+        fi
+        return 0
+    }
+fi
 
 source /usr/share/zsh-antigen/antigen.zsh
 
@@ -74,3 +98,5 @@ antigen apply
 
 # export FZF_DEFAULT_COMMAND='rg --files'
 [ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
+
+plugins=(virtualenv)

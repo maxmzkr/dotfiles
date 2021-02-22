@@ -20,6 +20,9 @@ if dein#load_state('~/.cache/dein')
   call dein#add('junegunn/fzf', {'merged': 0})
   call dein#add('junegunn/fzf.vim', { 'depends': 'fzf' })
   call dein#add('christoomey/vim-tmux-navigator')
+  call dein#add('nvim-telescope/telescope.nvim')
+  call dein#add('nvim-lua/popup.nvim')
+  call dein#add('nvim-lua/plenary.nvim')
 
   call dein#end()
   call dein#save_state()
@@ -31,9 +34,10 @@ set background=light
 colorscheme solarized
 let g:python_highlight_all = 1
 
-set clipboard=unnamed
+set clipboard=unnamedplus
 set backupdir=~/.cache/nvim/back//
 set directory=~/.cache/nvim/swap//
+set undofile
 set undodir=~/.cache/nvim/undo//
 
 if executable('jedi-language-server')
@@ -91,6 +95,8 @@ lua <<EOF
       end
     end
   end
+
+  lspconfig.jedi_language_server.setup{}
 EOF
 
 autocmd BufEnter * lua require'completion'.on_attach()

@@ -49,3 +49,9 @@
 
 [credential]
 	helper = /usr/lib/git-core/git-credential-libsecret
+
+[mergetool "vimdiff"]
+  cmd = nvim -d $LOCAL $REMOTE $MERGED -c '$wincmd w' -c 'wincmd J'
+
+[diff]
+  tool = vimdiff
