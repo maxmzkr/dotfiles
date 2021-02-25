@@ -53,5 +53,16 @@
 [mergetool "vimdiff"]
   cmd = nvim -d $LOCAL $REMOTE $MERGED -c '$wincmd w' -c 'wincmd J'
 
+[mergetool]
+  keepBackup = false
+
+[merge]
+  tool = vimdiff
+
+[diff "diff"]
+  command = nvim -d $LOCAL $REMOTE $MERGED -c '$wincmd w' -c 'wincmd J'
+
 [diff]
   tool = vimdiff
+[pull]
+	rebase = true

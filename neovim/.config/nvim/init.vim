@@ -17,6 +17,7 @@ if dein#load_state('~/.cache/dein')
   call dein#add('dense-analysis/ale')
   call dein#add('tpope/vim-fugitive')
   call dein#add('tpope/vim-rhubarb')
+  call dein#add('shumphrey/fugitive-gitlab.vim')
   call dein#add('junegunn/fzf', {'merged': 0})
   call dein#add('junegunn/fzf.vim', { 'depends': 'fzf' })
   call dein#add('christoomey/vim-tmux-navigator')
@@ -96,7 +97,11 @@ lua <<EOF
     end
   end
 
+  -- python
   lspconfig.jedi_language_server.setup{}
+
+  -- typescript
+  require'lspconfig'.tsserver.setup{}
 EOF
 
 autocmd BufEnter * lua require'completion'.on_attach()
@@ -128,7 +133,7 @@ nnoremap <silent> <leader>a   <cmd>lua require'metals'.open_all_diagnostics()<CR
 let g:neoformat_enabled_python = ['isort', 'black']
 augroup fmt
   autocmd!
-  autocmd BufWritePre * undojoin | Neoformat
+  au BufWritePre * try | undojoin | Neoformat | catch /^Vim\%((\a\+)\)\=:E790/ | finally | silent Neoformat | endtry
 augroup END
 
 autocmd FileType yaml setlocal ts=2 sts=2 sw=2 expandtab
