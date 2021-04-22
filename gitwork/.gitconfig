@@ -13,11 +13,8 @@
 [core]
 	editor = nvim
 	autocrlf = input
-	excludesfile = /home/wil/.gitignore_global
+	excludesfile = ~/.gitignore_global
 	pager = diff-so-fancy | less --tabs=4 -RFX
-
-[pager]
-	diff = diff-so-fancy | less --tabs=4 -RFXS --pattern '^(Date|added|deleted|modified): '
 
 [url "ssh://git@github.com/"]
 	insteadOf = https://github.com/
@@ -40,6 +37,7 @@
 	sub = submodule update --init --recursive
 	cp = cherry-pick
 	patch = !git --no-pager diff --no-colorcl = clone
+	rmbranches = !git branch -vv | grep ': gone' | awk '{print $1}' | xargs git branch -d -D
 
 [commit]
 	gpgsign = true
@@ -64,5 +62,12 @@
 
 [diff]
   tool = vimdiff
+
 [pull]
 	rebase = true
+
+[diff-so-fancy]
+	markEmptyLines = false
+
+[blame]
+	ignoreRevsFile = ~/.gitignorerevs

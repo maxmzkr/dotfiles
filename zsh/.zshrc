@@ -96,7 +96,37 @@ antigen bundle zdharma/zsh-diff-so-fancy
 
 antigen apply
 
-# export FZF_DEFAULT_COMMAND='rg --files'
+export FZF_DEFAULT_COMMAND='rg --files'
 [ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
 
 plugins=(virtualenv)
+
+# enable color support of ls and also add handy aliases
+if [ -x /usr/bin/dircolors ]; then
+    test -r ~/.dircolors && eval "$(dircolors -b ~/.dircolors)" || eval "$(dircolors -b)"
+    alias ls='ls --color=auto'
+    #alias dir='dir --color=auto'
+    #alias vdir='vdir --color=auto'
+
+    alias grep='grep --color=auto'
+    alias fgrep='fgrep --color=auto'
+    alias egrep='egrep --color=auto'
+fi
+alias ll='ls -alF'
+alias la='ls -A'
+alias l='ls -CF'
+
+# function to set the title of the current tab
+function set-title() {
+  printf '\e]2;'"${1}"'\a'
+}
+
+# function to start tmux and set title
+function new-ses() {
+  tmux new -s $1
+  set-title $1
+}
+
+# allow for ctrl+arrow movement
+bindkey "^[[1;5C" forward-word
+bindkey "^[[1;5D" backward-word

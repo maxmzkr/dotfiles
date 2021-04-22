@@ -24,6 +24,7 @@ if dein#load_state('~/.cache/dein')
   call dein#add('nvim-telescope/telescope.nvim')
   call dein#add('nvim-lua/popup.nvim')
   call dein#add('nvim-lua/plenary.nvim')
+  call dein#add('mbbill/undotree')
 
   call dein#end()
   call dein#save_state()
@@ -46,8 +47,13 @@ if executable('jedi-language-server')
 endif
 
 lua <<EOF
+  local lsp_status = require('lsp-status')
+  lsp_status.register_progress()
+
   lspconfig = require "lspconfig"
   lspconfig.gopls.setup {
+    on_attach = lsp_status.on_attach,
+    capabilities = lsp_status.capabilities,
     cmd = {"gopls"},
     settings = {
       gopls = {
@@ -82,8 +88,8 @@ lua <<EOF
 
   do
     local method = "textDocument/publishDiagnostics"
-    local default_callback = vim.lsp.callbacks[method]
-    vim.lsp.callbacks[method] = function(err, method, result, client_id)
+    local default_callback = vim.lsp.handlers[method]
+    vim.lsp.handlers[method] = function(err, method, result, client_id)
       default_callback(err, method, result, client_id)
       if result and result.diagnostics then
         for _, v in ipairs(result.diagnostics) do
@@ -98,14 +104,29 @@ lua <<EOF
   end
 
   -- python
-  lspconfig.jedi_language_server.setup{}
+  lspconfig.jedi_language_server.setup{
+    on_attach = lsp_status.on_attach,
+    capabilities = lsp_status.capabilities,
+  }
 
   -- typescript
-  require'lspconfig'.tsserver.setup{}
+  require'lspconfig'.tsserver.setup{
+    on_attach = lsp_status.on_attach,
+    capabilities = lsp_status.capabilities,
+  }
 EOF
 
 autocmd BufEnter * lua require'completion'.on_attach()
 autocmd BufWritePre *.go lua goimports(10000)
+
+" Statusline
+function! LspStatus() abort
+  if luaeval('#vim.lsp.buf_get_clients() > 0')
+    return luaeval("require('lsp-status').status()")
+  endif
+
+  return ''
+endfunction
 
 " Use <Tab> and <S-Tab> to navigate through popup menu
 inoremap <expr> <Tab>   pumvisible() ? "\<C-n>" : "\<Tab>"
@@ -130,13 +151,16 @@ nnoremap <silent> <leader>ca  <cmd>lua vim.lsp.buf.code_action()<CR>
 nnoremap <silent> <leader>ws  <cmd>lua require'metals'.show_hover_message()<CR>
 nnoremap <silent> <leader>a   <cmd>lua require'metals'.open_all_diagnostics()<CR>
 
-let g:neoformat_enabled_python = ['isort', 'black']
+let g:neoformat_enabled_python = ['black']
+let g:neoformat_enabled_sql = ['pg_format']
+let g:neoformat_enabled_xml = ['tidy']
 augroup fmt
   autocmd!
   au BufWritePre * try | undojoin | Neoformat | catch /^Vim\%((\a\+)\)\=:E790/ | finally | silent Neoformat | endtry
 augroup END
 
 autocmd FileType yaml setlocal ts=2 sts=2 sw=2 expandtab
+autocmd FileType typescript setlocal ts=2 sts=2 sw=2 expandtab
 
 set foldlevelstart=20
 
@@ -195,3 +219,9 @@ let g:fzf_history_dir = '~/.local/share/fzf-history'
 " Set up key bindings for fzf
 nnoremap <C-p> :FZF<Cr>
 nnoremap <C-g> :RG<Cr>
+
+" Reopen files at the same location as was left off
+autocmd BufReadPost *
+\ if line("'\"") >= 1 && line("'\"") <= line("$") && &ft !~# 'commit'
+\ |   exe "normal! g`\""
+\ | endif
