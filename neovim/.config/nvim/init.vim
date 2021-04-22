@@ -2,8 +2,10 @@ if &compatible
   set nocompatible
 endif
 " Add the dein installation directory into runtimepath
-set runtimepath+=~/.cache/dein/repos/github.com/Shougo/dein.vim
+let g:deinpath = '~/.cache/dein/repos/github.com/Shougo/dein.vim'
+exe 'set runtimepath+='.g:deinpath
 
+if isdirectory(expand(g:deinpath))
 if dein#load_state('~/.cache/dein')
   call dein#begin('~/.cache/dein')
 
@@ -29,15 +31,19 @@ if dein#load_state('~/.cache/dein')
   call dein#end()
   call dein#save_state()
 endif
+endif
 
 filetype plugin indent on
 syntax enable
 set background=light
-colorscheme solarized
+silent! colorscheme solarized
 let g:python_highlight_all = 1
 
 set clipboard=unnamedplus
-set backupdir=~/.cache/nvim/back//
+let backupdir = '~/.cache/nvim/back//'
+if isdirectory(expand(backupdir))
+  exe 'set backupdir='.backupdir
+endif
 set directory=~/.cache/nvim/swap//
 set undofile
 set undodir=~/.cache/nvim/undo//
@@ -46,6 +52,14 @@ if executable('jedi-language-server')
   lua require'lspconfig'.jedi_language_server.setup{}
 endif
 
+function HasPlugin(name)
+  if !isdirectory(expand(g:deinpath))
+    return 0
+  endif
+  return dein#check_install(["nvim-lspconfig"]) == 0
+endfunction
+
+if HasPlugin("nvim-lspconfig")
 lua <<EOF
   local lsp_status = require('lsp-status')
   lsp_status.register_progress()
@@ -116,8 +130,12 @@ lua <<EOF
   }
 EOF
 
-autocmd BufEnter * lua require'completion'.on_attach()
 autocmd BufWritePre *.go lua goimports(10000)
+endif
+
+if HasPlugin("completion")
+autocmd BufEnter * lua require'completion'.on_attach()
+endif
 
 " Statusline
 function! LspStatus() abort
@@ -151,6 +169,7 @@ nnoremap <silent> <leader>ca  <cmd>lua vim.lsp.buf.code_action()<CR>
 nnoremap <silent> <leader>ws  <cmd>lua require'metals'.show_hover_message()<CR>
 nnoremap <silent> <leader>a   <cmd>lua require'metals'.open_all_diagnostics()<CR>
 
+if HasPlugin("neoformat")
 let g:neoformat_enabled_python = ['black']
 let g:neoformat_enabled_sql = ['pg_format']
 let g:neoformat_enabled_xml = ['tidy']
@@ -158,6 +177,7 @@ augroup fmt
   autocmd!
   au BufWritePre * try | undojoin | Neoformat | catch /^Vim\%((\a\+)\)\=:E790/ | finally | silent Neoformat | endtry
 augroup END
+endif
 
 autocmd FileType yaml setlocal ts=2 sts=2 sw=2 expandtab
 autocmd FileType typescript setlocal ts=2 sts=2 sw=2 expandtab
