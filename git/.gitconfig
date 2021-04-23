@@ -71,3 +71,5 @@
 
 [include]
 	path = /home/max/.gitconfigs/.workconfig
+[init]
+	defaultBranch = main
