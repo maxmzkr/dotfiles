@@ -84,7 +84,7 @@ if [ -x /usr/lib/command-not-found -o -x /usr/share/command-not-found/command-no
     }
 fi
 
-source /usr/share/zsh-antigen/antigen.zsh
+source /home/max/.antigen.zsh
 
 # antigen use oh-my-zsh
 
@@ -96,7 +96,7 @@ antigen bundle zdharma/zsh-diff-so-fancy
 
 antigen apply
 
-export FZF_DEFAULT_COMMAND='rg --files'
+export FZF_DEFAULT_COMMAND='rg --hidden --files'
 [ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
 
 plugins=(virtualenv)

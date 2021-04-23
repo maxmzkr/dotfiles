@@ -1,0 +1,7 @@
+[user]
+	name = Max Mizikar
+	email = maxmzkr@censys.io
+	signingkey = 0x2F1871A7C9398611
+
+[blame]
+	ignoreRevsFile = ~/.gitignorerevs
