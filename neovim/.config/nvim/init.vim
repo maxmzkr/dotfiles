@@ -71,9 +71,7 @@ lua <<EOF
     cmd = {"gopls"},
     settings = {
       gopls = {
-        analyses = {
-          unusedparams = true,
-        },
+	hoverKind = "FullDocumentation",
         staticcheck = true,
 	gofumpt = true,
       },
@@ -130,6 +128,7 @@ lua <<EOF
   }
 EOF
 
+autocmd BufWritePre *.go lua vim.lsp.buf.formatting_sync(nil, 10000)
 autocmd BufWritePre *.go lua goimports(10000)
 endif
 
@@ -166,13 +165,12 @@ nnoremap <silent> gws         <cmd>lua vim.lsp.buf.workspace_symbol()<CR>
 nnoremap <silent> <leader>rn  <cmd>lua vim.lsp.buf.rename()<CR>
 nnoremap <silent> <leader>f   <cmd>lua vim.lsp.buf.formatting()<CR>
 nnoremap <silent> <leader>ca  <cmd>lua vim.lsp.buf.code_action()<CR>
-nnoremap <silent> <leader>ws  <cmd>lua require'metals'.show_hover_message()<CR>
-nnoremap <silent> <leader>a   <cmd>lua require'metals'.open_all_diagnostics()<CR>
 
 if HasPlugin("neoformat")
 let g:neoformat_enabled_python = ['black']
 let g:neoformat_enabled_sql = ['pg_format']
 let g:neoformat_enabled_xml = ['tidy']
+let g:neoformat_enabled_go = []
 augroup fmt
   autocmd!
   au BufWritePre * try | undojoin | Neoformat | catch /^Vim\%((\a\+)\)\=:E790/ | finally | silent Neoformat | endtry
@@ -185,7 +183,7 @@ autocmd FileType typescript setlocal ts=2 sts=2 sw=2 expandtab
 set foldlevelstart=20
 
 function! RipgrepFzf(query, fullscreen)
-  let command_fmt = 'rg --column --line-number --no-heading --color=always --smart-case -- %s || true'
+  let command_fmt = 'rg --hidden --column --line-number --no-heading --color=always --smart-case -- %s || true'
   let initial_command = printf(command_fmt, shellescape(a:query))
   let reload_command = printf(command_fmt, '{q}')
   let spec = {'options': ['--phony', '--query', a:query, '--bind', 'change:reload:'.reload_command]}

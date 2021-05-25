@@ -116,6 +116,13 @@ alias ll='ls -alF'
 alias la='ls -A'
 alias l='ls -CF'
 
+alias ipdb='ipdb3 '
+alias sudo='sudo '
+
+notif () {
+    $@ && paplay /usr/share/sounds/gnome/default/alerts/bark.ogg
+}
+
 # function to set the title of the current tab
 function set-title() {
   printf '\e]2;'"${1}"'\a'
@@ -130,3 +137,31 @@ function new-ses() {
 # allow for ctrl+arrow movement
 bindkey "^[[1;5C" forward-word
 bindkey "^[[1;5D" backward-word
+
+ENVSDIR="${HOME}"'/.venvs'
+
+function venv() {
+    source "${ENVSDIR}"'/'"${1}"'/bin/activate'
+}
+
+function makevenv() {
+    "${1}" -m venv "${ENVSDIR}"'/'"${2}"
+}
+
+function vf() {
+    ls -d "${ENVSDIR}"'/'*'/' | fzf | while read file; do source $file/bin/activate; done
+}
+
+function sf() {
+    sudo echo || exit 1
+    state_lookup=$(sudo salt-call --local state.show_highstate --output yaml | yq e '.local as $top | .local | keys | .[] | {.: $top[.].__sls__}' -)
+    all_sls=$(echo "${state_lookup}" | yq e '.[]' - | sort | uniq | paste -sd "," -)
+    echo "${state_lookup}" | yq e 'keys | .[]' - | fzf | while read state;
+    do
+        sudo salt-call --local state.sls_id "${state}" "${all_sls}";
+    done
+}
+
+if which kubectl > /dev/null; then
+	source <(kubectl completion zsh)
+fi
