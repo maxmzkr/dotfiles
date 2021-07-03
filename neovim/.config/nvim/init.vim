@@ -16,7 +16,7 @@ if dein#load_state('~/.cache/dein')
   call dein#add('altercation/vim-colors-solarized')
   call dein#add('sbdchd/neoformat')
   call dein#add('nvim-lua/lsp-status.nvim')
-  call dein#add('dense-analysis/ale')
+"   call dein#add('dense-analysis/ale')
   call dein#add('tpope/vim-fugitive')
   call dein#add('tpope/vim-rhubarb')
   call dein#add('shumphrey/fugitive-gitlab.vim')
@@ -68,7 +68,7 @@ lua <<EOF
   lspconfig.gopls.setup {
     on_attach = lsp_status.on_attach,
     capabilities = lsp_status.capabilities,
-    cmd = {"gopls"},
+    cmd = {"gopls", "-v", "-logfile", "auto"},
     settings = {
       gopls = {
 	hoverKind = "FullDocumentation",
@@ -126,6 +126,8 @@ lua <<EOF
     on_attach = lsp_status.on_attach,
     capabilities = lsp_status.capabilities,
   }
+
+  require'lspconfig'.clangd.setup{}
 EOF
 
 autocmd BufWritePre *.go lua vim.lsp.buf.formatting_sync(nil, 10000)
@@ -179,6 +181,7 @@ endif
 
 autocmd FileType yaml setlocal ts=2 sts=2 sw=2 expandtab
 autocmd FileType typescript setlocal ts=2 sts=2 sw=2 expandtab
+autocmd FileType json setlocal ts=2 sts=2 sw=2 expandtab
 
 set foldlevelstart=20
 
@@ -243,3 +246,9 @@ autocmd BufReadPost *
 \ if line("'\"") >= 1 && line("'\"") <= line("$") && &ft !~# 'commit'
 \ |   exe "normal! g`\""
 \ | endif
+
+if HasPlugin("ale")
+	let g:ale_linters = {
+	\	'go': [],
+	\}
+endif

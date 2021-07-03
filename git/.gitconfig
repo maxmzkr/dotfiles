@@ -73,3 +73,5 @@
 	path = /home/max/.gitconfigs/.workconfig
 [init]
 	defaultBranch = main
+[diff "sopsdiffer"]
+	textconv = sops -d

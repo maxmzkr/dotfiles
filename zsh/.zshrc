@@ -4,11 +4,30 @@ if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]
   source "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh"
 fi
 
-# Set up the prompt
-
-autoload -Uz promptinit
-promptinit
-prompt adam1
+if which antibody > /dev/null; then
+	plugin_txt=${HOME}/.zsh_plugins.txt
+	plugin_sh=${HOME}/.zsh_plugins.sh
+	reload=false
+	if [[ ! -f ${plugin_sh} ]]; then
+		reload=true
+	else
+		txt_time=$(stat --format='%Y' "$(realpath "$plugin_txt")")
+		sh_time=$(stat --format='%Y' "$(realpath "$plugin_sh")")
+		if (( txt_time > sh_time )); then
+			reload=true
+		fi
+	fi
+	if $reload; then
+		antibody bundle < $plugin_txt > $plugin_sh
+	fi
+	source $plugin_sh
+else
+	# Set up the prompt
+	
+	autoload -Uz promptinit
+	promptinit
+	prompt adam1
+fi
 
 setopt histignorealldups sharehistory
 
@@ -20,10 +39,6 @@ HISTSIZE=1000
 SAVEHIST=1000
 HISTFILE=~/.zsh_history
 
-# Use modern completion system
-autoload -Uz compinit
-compinit
-
 zstyle ':completion:*' auto-description 'specify: %d'
 zstyle ':completion:*' completer _expand _complete _correct _approximate
 zstyle ':completion:*' format 'Completing %d'
@@ -31,7 +46,6 @@ zstyle ':completion:*' group-name ''
 zstyle ':completion:*' menu select=2
 eval "$(dircolors -b)"
 zstyle ':completion:*:default' list-colors ${(s.:.)LS_COLORS}
-zstyle ':completion:*' list-colors ''
 zstyle ':completion:*' list-prompt %SAt %p: Hit TAB for more, or the character to insert%s
 zstyle ':completion:*' matcher-list '' 'm:{a-z}={A-Z}' 'm:{a-zA-Z}={A-Za-z}' 'r:|[._-]=* r:|=* l:|=*'
 zstyle ':completion:*' menu select=long
@@ -41,6 +55,11 @@ zstyle ':completion:*' verbose true
 
 zstyle ':completion:*:*:kill:*:processes' list-colors '=(#b) #([0-9]#)*=0=01;31'
 zstyle ':completion:*:kill:*' command 'ps -u $USER -o pid,%cpu,tty,cputime,cmd'
+# set list-colors to enable filename colorizing
+zstyle ':completion:*' list-colors ${(s.:.)LS_COLORS}
+zstyle ":fzf-tab:*" default-color  $'\6'
+zstyle ':fzf-tab:complete:cd:*' fzf-preview 'ls -1 --color=always $realpath'
+zstyle ':fzf-tab:*' fzf-command 'ftb-tmux-popup'
 
 export GPG_TTY="${TTY}"
 # Keyring
@@ -84,22 +103,8 @@ if [ -x /usr/lib/command-not-found -o -x /usr/share/command-not-found/command-no
     }
 fi
 
-source /home/max/.antigen.zsh
-
-# antigen use oh-my-zsh
-
-antigen theme romkatv/powerlevel10k
-
-antigen bundle git
-
-antigen bundle zdharma/zsh-diff-so-fancy
-
-antigen apply
-
 export FZF_DEFAULT_COMMAND='rg --hidden --files'
 [ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
-
-plugins=(virtualenv)
 
 # enable color support of ls and also add handy aliases
 if [ -x /usr/bin/dircolors ]; then
@@ -158,10 +163,26 @@ function sf() {
     all_sls=$(echo "${state_lookup}" | yq e '.[]' - | sort | uniq | paste -sd "," -)
     echo "${state_lookup}" | yq e 'keys | .[]' - | fzf | while read state;
     do
-        sudo salt-call --local state.sls_id "${state}" "${all_sls}";
+        print -s 'sudo salt-call --local --log-level debug state.sls_id '"${state}"' '"${all_sls}";
+        sudo salt-call --local --log-level debug state.sls_id "${state}" "${all_sls}";
     done
 }
 
-if which kubectl > /dev/null; then
-	source <(kubectl completion zsh)
-fi
+# if systemctl --user status docker.service > /dev/null; then
+# 	export DOCKER_HOST=unix://$XDG_RUNTIME_DIR/docker.sock
+# fi
+
+
+# kubectl aliases
+alias kg='kubectl get'
+alias kd='kubectl describe'
+alias kw='kubectl wait'
+
+# git aliases
+alias gcr='current_branch'
+
+# docker
+alias docker=podman
+
+autoload -U +X bashcompinit && bashcompinit
+complete -o nospace -C /home/max/tfenv/versions/1.0.1/terraform terraform
