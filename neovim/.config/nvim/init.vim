@@ -71,32 +71,32 @@ lua <<EOF
     cmd = {"gopls", "-v", "-logfile", "auto"},
     settings = {
       gopls = {
-	hoverKind = "FullDocumentation",
+        hoverKind = "FullDocumentation",
         staticcheck = true,
-	gofumpt = true,
+        gofumpt = true,
       },
     },
   }
 
-  function goimports(timeoutms)
-    local context = { source = { organizeImports = true, gofumpt = 1 } }
-    vim.validate { context = { context, "t", true } }
+  -- function goimports(timeoutms)
+  --   local context = { source = { organizeImports = true, gofumpt = 1 } }
+  --   vim.validate { context = { context, "t", true } }
 
-    local params = vim.lsp.util.make_range_params()
-    params.context = context
+  --   local params = vim.lsp.util.make_range_params()
+  --   params.context = context
 
-    local method = "textDocument/codeAction"
-    local resp = vim.lsp.buf_request_sync(0, method, params, timeoutms)
-    if resp and resp[1] then
-      local result = resp[1].result
-      if result and result[1] then
-        local edit = result[1].edit
-        vim.lsp.util.apply_workspace_edit(edit)
-      end
-    end
+  --   local method = "textDocument/codeAction"
+  --   local resp = vim.lsp.buf_request_sync(0, method, params, timeoutms)
+  --   if resp and resp[1] then
+  --     local result = resp[1].result
+  --     if result and result[1] then
+  --       local edit = result[1].edit
+  --       vim.lsp.util.apply_workspace_edit(edit)
+  --     end
+  --   end
 
-    -- vim.lsp.buf.formatting()
-  end
+  --   -- vim.lsp.buf.formatting()
+  -- end
 
   do
     local method = "textDocument/publishDiagnostics"
@@ -131,7 +131,7 @@ lua <<EOF
 EOF
 
 autocmd BufWritePre *.go lua vim.lsp.buf.formatting_sync(nil, 10000)
-autocmd BufWritePre *.go lua goimports(10000)
+" autocmd BufWritePre *.go lua goimports(10000)
 endif
 
 if HasPlugin("completion")

@@ -4,9 +4,37 @@ if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]
   source "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh"
 fi
 
+export SSH_AUTH_SOCK=/run/user/1000/gnupg/S.gpg-agent.ssh
+export EDITOR='vim'
+
+HISTFILE="$HOME/.zsh_history"
+HISTSIZE=10000000
+SAVEHIST=10000000
+setopt BANG_HIST                 # Treat the '!' character specially during expansion.
+setopt EXTENDED_HISTORY          # Write the history file in the ":start:elapsed;command" format.
+setopt INC_APPEND_HISTORY        # Write to the history file immediately, not when the shell exits.
+setopt SHARE_HISTORY             # Share history between all sessions.
+setopt HIST_EXPIRE_DUPS_FIRST    # Expire duplicate entries first when trimming history.
+setopt HIST_IGNORE_DUPS          # Don't record an entry that was just recorded again.
+setopt HIST_IGNORE_ALL_DUPS      # Delete old recorded entry if new entry is a duplicate.
+setopt HIST_FIND_NO_DUPS         # Do not display a line previously found.
+setopt HIST_IGNORE_SPACE         # Don't record an entry starting with a space.
+setopt HIST_SAVE_NO_DUPS         # Don't write duplicate entries in the history file.
+setopt HIST_REDUCE_BLANKS        # Remove superfluous blanks before recording entry.
+setopt HIST_VERIFY               # Don't execute immediately upon history expansion.
+setopt HIST_BEEP                 # Beep when accessing nonexistent history.
+
+autoload -U +X compinit && compinit
+autoload -U +X bashcompinit && bashcompinit
+
 if which antibody > /dev/null; then
 	plugin_txt=${HOME}/.zsh_plugins.txt
 	plugin_sh=${HOME}/.zsh_plugins.sh
+
+	function antibody_reload() {
+		antibody bundle < $plugin_txt > $plugin_sh
+	}
+
 	reload=false
 	if [[ ! -f ${plugin_sh} ]]; then
 		reload=true
@@ -18,7 +46,7 @@ if which antibody > /dev/null; then
 		fi
 	fi
 	if $reload; then
-		antibody bundle < $plugin_txt > $plugin_sh
+		antibody_reload
 	fi
 	source $plugin_sh
 else
@@ -29,15 +57,10 @@ else
 	prompt adam1
 fi
 
-setopt histignorealldups sharehistory
+[ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
 
 # Use emacs keybindings even if our EDITOR is set to vi
 bindkey -e
-
-# Keep 1000 lines of history within the shell and save it to ~/.zsh_history:
-HISTSIZE=1000
-SAVEHIST=1000
-HISTFILE=~/.zsh_history
 
 zstyle ':completion:*' auto-description 'specify: %d'
 zstyle ':completion:*' completer _expand _complete _correct _approximate
@@ -55,11 +78,20 @@ zstyle ':completion:*' verbose true
 
 zstyle ':completion:*:*:kill:*:processes' list-colors '=(#b) #([0-9]#)*=0=01;31'
 zstyle ':completion:*:kill:*' command 'ps -u $USER -o pid,%cpu,tty,cputime,cmd'
+set list-colors to enable filename colorizing
+# preview directory's content with exa when completing cd
+# disable sort when completing `git checkout`
+zstyle ':completion:*:git-checkout:*' sort false
+# set descriptions format to enable group support
+zstyle ':completion:*:descriptions' format '[%d]'
 # set list-colors to enable filename colorizing
 zstyle ':completion:*' list-colors ${(s.:.)LS_COLORS}
-zstyle ":fzf-tab:*" default-color  $'\6'
-zstyle ':fzf-tab:complete:cd:*' fzf-preview 'ls -1 --color=always $realpath'
-zstyle ':fzf-tab:*' fzf-command 'ftb-tmux-popup'
+# preview directory's content with exa when completing cd
+zstyle ':fzf-tab:complete:cd:*' fzf-preview 'exa -1 --color=always $realpath'
+# switch group using `,` and `.`
+zstyle ':fzf-tab:*' switch-group ',' '.'
+
+export FZF_DEFAULT_COMMAND='rg --hidden --files'
 
 export GPG_TTY="${TTY}"
 # Keyring
@@ -67,7 +99,6 @@ export GPG_TTY="${TTY}"
 #   eval $(gnome-keyring-daemon --start --components=ssh,secrets,gpg)
 #   export SSH_AUTH_SOCK
 # fi
-export SSH_AUTH_SOCK=/run/user/1000/gnupg/S.gpg-agent.ssh
 
 source /home/max/.gvm/scripts/gvm
 export PATH=$PATH:/usr/local/go/bin
@@ -102,9 +133,6 @@ if [ -x /usr/lib/command-not-found -o -x /usr/share/command-not-found/command-no
         return 0
     }
 fi
-
-export FZF_DEFAULT_COMMAND='rg --hidden --files'
-[ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
 
 # enable color support of ls and also add handy aliases
 if [ -x /usr/bin/dircolors ]; then
@@ -182,7 +210,6 @@ alias kw='kubectl wait'
 alias gcr='current_branch'
 
 # docker
-alias docker=podman
+# alias docker=podman
 
-autoload -U +X bashcompinit && bashcompinit
 complete -o nospace -C /home/max/tfenv/versions/1.0.1/terraform terraform

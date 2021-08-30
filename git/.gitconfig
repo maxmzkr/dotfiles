@@ -48,20 +48,23 @@
 [credential]
 	helper = /usr/lib/git-core/git-credential-libsecret
 
-[mergetool "vimdiff"]
+[mergetool "nvimdiff"]
   cmd = nvim -d $LOCAL $REMOTE $MERGED -c '$wincmd w' -c 'wincmd J'
 
 [mergetool]
   keepBackup = false
 
 [merge]
-  tool = vimdiff
+  tool = nvimdiff
 
 [diff "diff"]
   command = nvim -d $LOCAL $REMOTE $MERGED -c '$wincmd w' -c 'wincmd J'
 
 [diff]
-  tool = vimdiff
+  tool = nvimdiff
+
+[difftool "nvimdfif"]
+  cmd = nvim -d "$LOCAL" "$REMOTE"
 
 [pull]
 	rebase = true
