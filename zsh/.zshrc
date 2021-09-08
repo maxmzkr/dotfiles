@@ -25,7 +25,28 @@ setopt HIST_VERIFY               # Don't execute immediately upon history expans
 setopt HIST_BEEP                 # Beep when accessing nonexistent history.
 
 autoload -U +X compinit && compinit
+# compinit optimization for oh-my-zsh
+# On slow systems, checking the cached .zcompdump file to see if it must be
+# regenerated adds a noticable delay to zsh startup.  This little hack restricts
+# it to once a day.  It should be pasted into your own completion file.
+#
+# The globbing is a little complicated here:
+# - '#q' is an explicit glob qualifier that makes globbing work within zsh's [[ ]] construct.
+# - 'N' makes the glob pattern evaluate to nothing when it doesn't match (rather than throw a globbing error)
+# - '.' matches "regular files"
+# - 'mh+24' matches files (or directories or whatever) that are older than 24 hours.
+# setopt extendedglob
+# if [[ -n "${ZSH_COMPDUMP}"(#qN.mh+24) ]]; then
+#     compinit -i -d "${ZSH_COMPDUMP}"
+#     compdump
+# else
+#     compinit -C
+# fi
 autoload -U +X bashcompinit && bashcompinit
+autoload -Uz url-quote-magic
+
+ZSH_TMUX_AUTOSTART=true;
+ZSH_TMUX_AUTOCONNECT=false;
 
 if which antibody > /dev/null; then
 	plugin_txt=${HOME}/.zsh_plugins.txt
@@ -58,7 +79,6 @@ else
 fi
 
 [ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
-
 # Use emacs keybindings even if our EDITOR is set to vi
 bindkey -e
 
@@ -90,8 +110,6 @@ zstyle ':completion:*' list-colors ${(s.:.)LS_COLORS}
 zstyle ':fzf-tab:complete:cd:*' fzf-preview 'exa -1 --color=always $realpath'
 # switch group using `,` and `.`
 zstyle ':fzf-tab:*' switch-group ',' '.'
-
-export FZF_DEFAULT_COMMAND='rg --hidden --files'
 
 export GPG_TTY="${TTY}"
 # Keyring

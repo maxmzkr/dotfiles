@@ -1,9 +1,16 @@
 ohmyzsh/ohmyzsh
+
+# git-escape-magic does an autoload, so it needs to add to the fpath first.
+ohmyzsh/ohmyzsh path:plugins/git-escape-magic kind:fpath
+
 ohmyzsh/ohmyzsh path:plugins/cp
+ohmyzsh/ohmyzsh path:plugins/dnf
 ohmyzsh/ohmyzsh path:plugins/docker
 ohmyzsh/ohmyzsh path:plugins/docker-compose
 ohmyzsh/ohmyzsh path:plugins/gcloud
 ohmyzsh/ohmyzsh path:plugins/git
+ohmyzsh/ohmyzsh path:plugins/git-auto-fetch
+ohmyzsh/ohmyzsh path:plugins/git-escape-magic
 ohmyzsh/ohmyzsh path:plugins/git-prompt
 ohmyzsh/ohmyzsh path:plugins/gitfast
 ohmyzsh/ohmyzsh path:plugins/golang
@@ -31,3 +38,6 @@ Aloxaf/fzf-tab
 
 # But this has to be after fzf-tab...
 ohmyzsh/ohmyzsh path:plugins/minikube
+
+# and fzf itself also has to be after fzf-tab
+ohmyzsh/ohmyzsh path:plugins/fzf

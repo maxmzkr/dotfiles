@@ -252,3 +252,5 @@ if HasPlugin("ale")
 	\	'go': [],
 	\}
 endif
+
+set spell
