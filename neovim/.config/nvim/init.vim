@@ -10,7 +10,15 @@ if dein#load_state('~/.cache/dein')
   call dein#begin('~/.cache/dein')
 
   call dein#add('~/.cache/dein/repos/github.com/Shougo/dein.vim')
-  call dein#add('nvim-lua/completion-nvim')
+  call dein#add('hrsh7th/cmp-nvim-lsp')
+  call dein#add('hrsh7th/cmp-buffer')
+  call dein#add('hrsh7th/cmp-path')
+  call dein#add('hrsh7th/cmp-cmdline')
+  call dein#add('hrsh7th/nvim-cmp')
+  call dein#add('hrsh7th/cmp-vsnip')
+  call dein#add('hrsh7th/vim-vsnip')
+  call dein#add('hrsh7th/vim-vsnip-integ')
+  call dein#add('golang/vscode-go', {'merged': 0})
   call dein#add('neovim/nvim-lspconfig')
   call dein#add('vim-python/python-syntax')
   call dein#add('altercation/vim-colors-solarized')
@@ -27,6 +35,9 @@ if dein#load_state('~/.cache/dein')
   call dein#add('nvim-lua/popup.nvim')
   call dein#add('nvim-lua/plenary.nvim')
   call dein#add('mbbill/undotree')
+  call dein#add('PeterRincker/vim-argumentative')
+  call dein#add('mfussenegger/nvim-jdtls')
+  call dein#add('hashivim/vim-terraform')
 
   call dein#end()
   call dein#save_state()
@@ -61,6 +72,75 @@ endfunction
 
 if HasPlugin("nvim-lspconfig")
 lua <<EOF
+  -- Setup nvim-cmp.
+  local cmp = require'cmp'
+
+  cmp.setup({
+    preselect=cmp.PreselectMode.None,
+    mapping = {
+      ['<C-b>'] = cmp.mapping(cmp.mapping.scroll_docs(-4), { 'i', 'c' }),
+      ['<C-f>'] = cmp.mapping(cmp.mapping.scroll_docs(4), { 'i', 'c' }),
+      ['<C-Space>'] = cmp.mapping(cmp.mapping.complete(), { 'i', 'c' }),
+      ['<C-y>'] = cmp.config.disable, -- Specify `cmp.config.disable` if you want to remove the default `<C-y>` mapping.
+      ['<C-e>'] = cmp.mapping({
+        i = cmp.mapping.abort(),
+        c = cmp.mapping.close(),
+      }),
+      ['<CR>'] = cmp.mapping.confirm({ select = true }), -- Accept currently selected item. Set `select` to `false` to only confirm explicitly selected items.
+    },
+    snippet = {
+      -- REQUIRED - you must specify a snippet engine
+      expand = function(args)
+        vim.fn["vsnip#anonymous"](args.body) -- For `vsnip` users.
+        -- require('luasnip').lsp_expand(args.body) -- For `luasnip` users.
+        -- require('snippy').expand_snippet(args.body) -- For `snippy` users.
+        -- vim.fn["UltiSnips#Anon"](args.body) -- For `ultisnips` users.
+      end,
+    },
+    sources = cmp.config.sources({
+      { name = 'nvim_lsp' },
+      { name = 'vsnip' }, -- For vsnip users.
+      -- { name = 'luasnip' }, -- For luasnip users.
+      -- { name = 'ultisnips' }, -- For ultisnips users.
+      -- { name = 'snippy' }, -- For snippy users.
+    }, {
+      { name = 'buffer' },
+    }),
+    sorting = {
+      comparators = {
+        cmp.config.compare.recently_used,
+	cmp.config.compare.exact,
+	cmp.config.compare.score,
+	cmp.config.compare.length,
+	cmp.config.compare.sort_text,
+	cmp.config.compare.kind,
+	cmp.config.compare.order,
+	cmp.config.compare.offset,
+      },
+    },
+    experimental = {
+      ghost_text = true
+    }
+  })
+
+  -- Use buffer source for `/` (if you enabled `native_menu`, this won't work anymore).
+  cmp.setup.cmdline('/', {
+    sources = {
+      { name = 'buffer' }
+    }
+  })
+
+  -- Use cmdline & path source for ':' (if you enabled `native_menu`, this won't work anymore).
+  cmp.setup.cmdline(':', {
+    sources = cmp.config.sources({
+      { name = 'path' }
+    }, {
+      { name = 'cmdline' }
+    })
+  })
+
+  -- Setup lspconfig.
+  local capabilities = require('cmp_nvim_lsp').update_capabilities(vim.lsp.protocol.make_client_capabilities())
   local lsp_status = require('lsp-status')
   lsp_status.register_progress()
 
@@ -128,14 +208,78 @@ lua <<EOF
   }
 
   require'lspconfig'.clangd.setup{}
+
+  -- -- java
+  -- -- See `:help vim.lsp.start_client` for an overview of the supported `config` options.
+  -- local config = {
+  --   -- The command that starts the language server
+  --   -- See: https://github.com/eclipse/eclipse.jdt.ls#running-from-the-command-line
+  --   cmd = {
+  -- 
+  --     -- 💀
+  --     'java', -- or '/path/to/java11_or_newer/bin/java'
+  --             -- depends on if `java` is in your $PATH env variable and if it points to the right version.
+  -- 
+  --     '-Declipse.application=org.eclipse.jdt.ls.core.id1',
+  --     '-Dosgi.bundles.defaultStartLevel=4',
+  --     '-Declipse.product=org.eclipse.jdt.ls.core.product',
+  --     '-Dlog.protocol=true',
+  --     '-Dlog.level=ALL',
+  --     '-Xms1g',
+  --     '--add-modules=ALL-SYSTEM',
+  --     '--add-opens', 'java.base/java.util=ALL-UNNAMED',
+  --     '--add-opens', 'java.base/java.lang=ALL-UNNAMED',
+  -- 
+  --     -- 💀
+  --     '-jar', '/home/max/eclipse.jdt.ls/org.eclipse.jdt.ls.product/target/repository/plugins/org.eclipse.equinox.launcher_1.6.400.v20210924-0641.jar',
+  --          -- ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^                                       ^^^^^^^^^^^^^^
+  --          -- Must point to the                                                     Change this to
+  --          -- eclipse.jdt.ls installation                                           the actual version
+  -- 
+  -- 
+  --     -- 💀
+  --     '-configuration', '/home/max/eclipse.jdt.ls/org.eclipse.jdt.ls.product/target/repository/config_linux',
+  --                     -- ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^        ^^^^^^
+  --                     -- Must point to the                      Change to one of `linux`, `win` or `mac`
+  --                     -- eclipse.jdt.ls installation            Depending on your system.
+  -- 
+  -- 
+  --     -- 💀
+  --     -- See `data directory configuration` section in the README
+  --     '-data', '/home/max/.eclipse.jdt.ls/dbz'
+  --   },
+  -- 
+  --   -- 💀
+  --   -- This is the default if not provided, you can remove it. Or adjust as needed.
+  --   -- One dedicated LSP server & client will be started per unique root_dir
+  --   root_dir = require('jdtls.setup').find_root({'.git', 'mvnw', 'gradlew'}),
+  -- 
+  --   -- Here you can configure eclipse.jdt.ls specific settings
+  --   -- See https://github.com/eclipse/eclipse.jdt.ls/wiki/Running-the-JAVA-LS-server-from-the-command-line#initialize-request
+  --   -- for a list of options
+  --   settings = {
+  --     java = {
+  --     }
+  --   },
+  -- 
+  --   -- Language server `initializationOptions`
+  --   -- You need to extend the `bundles` with paths to jar files
+  --   -- if you want to use additional eclipse.jdt.ls plugins.
+  --   --
+  --   -- See https://github.com/mfussenegger/nvim-jdtls#java-debug-installation
+  --   --
+  --   -- If you don't plan on using the debugger or other eclipse.jdt.ls plugins you can remove this
+  --   init_options = {
+  --     bundles = {}
+  --   },
+  -- }
+  -- -- This starts a new client & server,
+  -- -- or attaches to an existing client & server depending on the `root_dir`.
+  -- require('jdtls').start_or_attach(config)
 EOF
 
 autocmd BufWritePre *.go lua vim.lsp.buf.formatting_sync(nil, 10000)
 " autocmd BufWritePre *.go lua goimports(10000)
-endif
-
-if HasPlugin("completion")
-autocmd BufEnter * lua require'completion'.on_attach()
 endif
 
 " Statusline
@@ -182,6 +326,10 @@ endif
 autocmd FileType yaml setlocal ts=2 sts=2 sw=2 expandtab
 autocmd FileType typescript setlocal ts=2 sts=2 sw=2 expandtab
 autocmd FileType json setlocal ts=2 sts=2 sw=2 expandtab
+autocmd FileType proto setlocal ts=2 sts=2 sw=2 expandtab
+au BufRead,BufNewFile *.sls set filetype=yaml
+
+autocmd FileType proto nnoremap <silent> <buffer> <leader>pb  <cmd>e %:p:r.pb.go<CR>
 
 set foldlevelstart=20
 
@@ -254,3 +402,33 @@ if HasPlugin("ale")
 endif
 
 set spell
+
+
+
+" NOTE: You can use other key to expand snippet.
+
+" Expand
+imap <expr> <C-j>   vsnip#expandable()  ? '<Plug>(vsnip-expand)'         : '<C-j>'
+smap <expr> <C-j>   vsnip#expandable()  ? '<Plug>(vsnip-expand)'         : '<C-j>'
+
+" Expand or jump
+imap <expr> <C-l>   vsnip#available(1)  ? '<Plug>(vsnip-expand-or-jump)' : '<C-l>'
+smap <expr> <C-l>   vsnip#available(1)  ? '<Plug>(vsnip-expand-or-jump)' : '<C-l>'
+
+" Jump forward or backward
+imap <expr> <Tab>   vsnip#jumpable(1)   ? '<Plug>(vsnip-jump-next)'      : '<Tab>'
+smap <expr> <Tab>   vsnip#jumpable(1)   ? '<Plug>(vsnip-jump-next)'      : '<Tab>'
+imap <expr> <S-Tab> vsnip#jumpable(-1)  ? '<Plug>(vsnip-jump-prev)'      : '<S-Tab>'
+smap <expr> <S-Tab> vsnip#jumpable(-1)  ? '<Plug>(vsnip-jump-prev)'      : '<S-Tab>'
+
+" Select or cut text to use as $TM_SELECTED_TEXT in the next snippet.
+" See https://github.com/hrsh7th/vim-vsnip/pull/50
+nmap        s   <Plug>(vsnip-select-text)
+xmap        s   <Plug>(vsnip-select-text)
+nmap        S   <Plug>(vsnip-cut-text)
+xmap        S   <Plug>(vsnip-cut-text)
+
+" If you want to use snippet for multiple filetypes, you can `g:vsnip_filetypes` for it.
+let g:vsnip_filetypes = {}
+let g:vsnip_filetypes.javascriptreact = ['javascript']
+let g:vsnip_filetypes.typescriptreact = ['typescript']

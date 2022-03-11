@@ -14,7 +14,6 @@
 	editor = nvim
 	autocrlf = input
 	excludesfile = ~/.gitignore_global
-	pager = diff-so-fancy | less --tabs=4 -RFX
 
 [url "ssh://git@github.com/"]
 	insteadOf = https://github.com/
@@ -38,6 +37,8 @@
 	cp = cherry-pick
 	patch = !git --no-pager diff --no-colorcl = clone
 	rmbranches = !git branch -vv | grep ': gone' | awk '{print $1}' | xargs git branch -d -D
+	stashgrep = "!f() { for i in `git stash list --format=\"%gd\"` ; \
+              do git stash show -p $i | grep -H --label=\"$i\" \"$@\" ; done ; }; f"
 
 [commit]
 	gpgsign = true
@@ -68,9 +69,6 @@
 
 [pull]
 	rebase = true
-
-[diff-so-fancy]
-	markEmptyLines = false
 
 [include]
 	path = /home/max/.gitconfigs/.workconfig
