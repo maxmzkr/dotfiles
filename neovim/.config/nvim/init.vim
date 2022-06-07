@@ -38,6 +38,12 @@ if dein#load_state('~/.cache/dein')
   call dein#add('PeterRincker/vim-argumentative')
   call dein#add('mfussenegger/nvim-jdtls')
   call dein#add('hashivim/vim-terraform')
+  call dein#add('folke/trouble.nvim')
+  call dein#add('kyazdani42/nvim-web-devicons')
+  call dein#add('scalameta/nvim-metals')
+  call dein#add('mfussenegger/nvim-dap')
+  call dein#add('leoluz/nvim-dap-go', {'merged': 0})
+  call dein#add('nvim-treesitter/nvim-treesitter')
 
   call dein#end()
   call dein#save_state()
@@ -72,11 +78,41 @@ endfunction
 
 if HasPlugin("nvim-lspconfig")
 lua <<EOF
+  -- Setup treesitter
+  require'nvim-treesitter.configs'.setup {
+    -- A list of parser names, or "all"
+    ensure_installed = { "go" },
+  
+    -- Install parsers synchronously (only applied to `ensure_installed`)
+    sync_install = false,
+  
+    -- List of parsers to ignore installing (for "all")
+    -- ignore_install = { "javascript" },
+  
+    highlight = {
+      -- `false` will disable the whole extension
+      enable = true,
+  
+      -- NOTE: these are the names of the parsers and not the filetype. (for example if you want to
+      -- disable highlighting for the `tex` filetype, you need to include `latex` in this list as this is
+      -- the name of the parser)
+      -- list of language that will be disabled
+      -- disable = { "c", "rust" },
+  
+      -- Setting this to true will run `:h syntax` and tree-sitter at the same time.
+      -- Set this to `true` if you depend on 'syntax' being enabled (like for indentation).
+      -- Using this option may slow down your editor, and you may see some duplicate highlights.
+      -- Instead of true it can also be a list of languages
+      additional_vim_regex_highlighting = false,
+    },
+  }
+
   -- Setup nvim-cmp.
   local cmp = require'cmp'
+  local types = require'cmp.types'
 
   cmp.setup({
-    preselect=cmp.PreselectMode.None,
+    preselect=cmp.PreselectMode.Item,
     mapping = {
       ['<C-b>'] = cmp.mapping(cmp.mapping.scroll_docs(-4), { 'i', 'c' }),
       ['<C-f>'] = cmp.mapping(cmp.mapping.scroll_docs(4), { 'i', 'c' }),
@@ -86,6 +122,8 @@ lua <<EOF
         i = cmp.mapping.abort(),
         c = cmp.mapping.close(),
       }),
+      ['<C-n>'] = cmp.mapping(cmp.mapping.select_next_item({ behavior = types.cmp.SelectBehavior.Insert }), { 'i', 'c' }),
+      ['<C-p>'] = cmp.mapping(cmp.mapping.select_prev_item({ behavior = types.cmp.SelectBehavior.Insert }), { 'i', 'c' }),
       ['<CR>'] = cmp.mapping.confirm({ select = true }), -- Accept currently selected item. Set `select` to `false` to only confirm explicitly selected items.
     },
     snippet = {
@@ -96,6 +134,10 @@ lua <<EOF
         -- require('snippy').expand_snippet(args.body) -- For `snippy` users.
         -- vim.fn["UltiSnips#Anon"](args.body) -- For `ultisnips` users.
       end,
+    },
+    window = {
+      -- completion = cmp.config.window.bordered(),
+      -- documentation = cmp.config.window.bordered(),
     },
     sources = cmp.config.sources({
       { name = 'nvim_lsp' },
@@ -109,13 +151,13 @@ lua <<EOF
     sorting = {
       comparators = {
         cmp.config.compare.recently_used,
-	cmp.config.compare.exact,
-	cmp.config.compare.score,
-	cmp.config.compare.length,
-	cmp.config.compare.sort_text,
-	cmp.config.compare.kind,
-	cmp.config.compare.order,
-	cmp.config.compare.offset,
+        cmp.config.compare.exact,
+        cmp.config.compare.score,
+        cmp.config.compare.length,
+        cmp.config.compare.sort_text,
+        cmp.config.compare.kind,
+        cmp.config.compare.order,
+        cmp.config.compare.offset,
       },
     },
     experimental = {
@@ -145,38 +187,53 @@ lua <<EOF
   lsp_status.register_progress()
 
   lspconfig = require "lspconfig"
+
+  function organizeImports(client, timeoutms)
+    local context = { source = { organizeImports = true, gofumpt = 1 } }
+    vim.validate { context = { context, "t", true } }
+
+    local params = vim.lsp.util.make_range_params()
+    params.context = context
+
+    local method = "textDocument/codeAction"
+    local resp = vim.lsp.buf_request_sync(0, method, params, timeoutms)
+    if resp and resp[1] then
+      local result = resp[1].result
+      if result and result[1] then
+        local edit = result[1].edit
+        vim.lsp.util.apply_workspace_edit(edit, client.offset_encoding)
+      end
+    end
+  end
+
+  local dap = require("dap")
+  require('dap-go').setup()
+
   lspconfig.gopls.setup {
-    on_attach = lsp_status.on_attach,
+    on_attach = function (client, bufnr)
+      vim.api.nvim_create_autocmd(
+        {"BufWritePre"},
+        {
+          pattern = {"<buffer>"},
+          callback = function()
+            organizeImports(client, 1000)
+            vim.lsp.buf.format(nil, 100000)
+          end
+        }
+      )
+      lsp_status.on_attach(client, bufnr)
+    end,
     capabilities = lsp_status.capabilities,
-    cmd = {"gopls", "-v", "-logfile", "auto"},
+    cmd = {"gopls", "-vv", "-rpc.trace", "-logfile", "auto"},
     settings = {
       gopls = {
         hoverKind = "FullDocumentation",
         staticcheck = true,
         gofumpt = true,
+        ['local'] = "github.com/censys",
       },
     },
   }
-
-  -- function goimports(timeoutms)
-  --   local context = { source = { organizeImports = true, gofumpt = 1 } }
-  --   vim.validate { context = { context, "t", true } }
-
-  --   local params = vim.lsp.util.make_range_params()
-  --   params.context = context
-
-  --   local method = "textDocument/codeAction"
-  --   local resp = vim.lsp.buf_request_sync(0, method, params, timeoutms)
-  --   if resp and resp[1] then
-  --     local result = resp[1].result
-  --     if result and result[1] then
-  --       local edit = result[1].edit
-  --       vim.lsp.util.apply_workspace_edit(edit)
-  --     end
-  --   end
-
-  --   -- vim.lsp.buf.formatting()
-  -- end
 
   do
     local method = "textDocument/publishDiagnostics"
@@ -209,17 +266,116 @@ lua <<EOF
 
   require'lspconfig'.clangd.setup{}
 
+  vim.opt_global.shortmess:remove("F"):append("c")
+
+  local metals_config = require("metals").bare_config()
+
+  -- Example of settings
+  metals_config.settings = {
+    showImplicitArguments = true,
+    excludedPackages = { "akka.actor.typed.javadsl", "com.github.swagger.akka.javadsl" },
+  }
+  local function map(mode, lhs, rhs, opts)
+    local options = { noremap = true }
+    if opts then
+      options = vim.tbl_extend("force", options, opts)
+    end
+    vim.api.nvim_set_keymap(mode, lhs, rhs, options)
+  end
+
+  -- LSP mappings
+  map("n", "gD", "<cmd>lua vim.lsp.buf.definition()<CR>")
+  map("n", "K", "<cmd>lua vim.lsp.buf.hover()<CR>")
+  map("n", "gi", "<cmd>lua vim.lsp.buf.implementation()<CR>")
+  map("n", "gr", "<cmd>lua vim.lsp.buf.references()<CR>")
+  map("n", "gds", "<cmd>lua vim.lsp.buf.document_symbol()<CR>")
+  map("n", "gws", "<cmd>lua vim.lsp.buf.workspace_symbol()<CR>")
+  map("n", "<leader>cl", [[<cmd>lua vim.lsp.codelens.run()<CR>]])
+  map("n", "<leader>sh", [[<cmd>lua vim.lsp.buf.signature_help()<CR>]])
+  map("n", "<leader>rn", "<cmd>lua vim.lsp.buf.rename()<CR>")
+  map("n", "<leader>f", "<cmd>lua vim.lsp.buf.format{async=true}<CR>")
+  map("n", "<leader>ca", "<cmd>lua vim.lsp.buf.code_action()<CR>")
+  map("n", "<leader>ws", '<cmd>lua require"metals".hover_worksheet()<CR>')
+  map("n", "<leader>aa", [[<cmd>lua vim.diagnostic.setqflist()<CR>]]) -- all workspace diagnostics
+  map("n", "<leader>ae", [[<cmd>lua vim.diagnostic.setqflist({severity = "E"})<CR>]]) -- all workspace errors
+  map("n", "<leader>aw", [[<cmd>lua vim.diagnostic.setqflist({severity = "W"})<CR>]]) -- all workspace warnings
+  map("n", "<leader>d", "<cmd>lua vim.diagnostic.setloclist()<CR>") -- buffer diagnostics only
+  map("n", "[c", "<cmd>lua vim.diagnostic.goto_prev { wrap = false }<CR>")
+  map("n", "]c", "<cmd>lua vim.diagnostic.goto_next { wrap = false }<CR>")
+  
+  -- Example mappings for usage with nvim-dap. If you don't use that, you can
+  -- skip these
+  map("n", "<leader>dc", [[<cmd>lua require"dap".continue()<CR>]])
+  map("n", "<leader>dr", [[<cmd>lua require"dap".repl.toggle()<CR>]])
+  map("n", "<leader>dK", [[<cmd>lua require"dap.ui.widgets".hover()<CR>]])
+  map("n", "<leader>dt", [[<cmd>lua require"dap".toggle_breakpoint()<CR>]])
+  map("n", "<leader>dso", [[<cmd>lua require"dap".step_over()<CR>]])
+  map("n", "<leader>dsi", [[<cmd>lua require"dap".step_into()<CR>]])
+  map("n", "<leader>dl", [[<cmd>lua require"dap".run_last()<CR>]])
+  
+  -- Example if you are using cmp how to make sure the correct capabilities for snippets are set
+  metals_config.capabilities = capabilities
+
+
+  -- Debug settings if you're using nvim-dap
+  dap.configurations.scala = {
+    {
+      type = "scala",
+      request = "launch",
+      name = "RunOrTest",
+      metals = {
+        runType = "runOrTestFile",
+        --args = { "firstArg", "secondArg", "thirdArg" }, -- here just as an example
+      },
+    },
+    {
+      type = "scala",
+      request = "launch",
+      name = "Test Target",
+      metals = {
+        runType = "testTarget",
+      },
+    },
+  }
+  
+  metals_config.on_attach = function(client, bufnr)
+    require("metals").setup_dap()
+    vim.api.nvim_create_autocmd(
+      {"BufWritePre"},
+      {
+        pattern = {"<buffer>"},
+        callback = function()
+          vim.lsp.buf.format(nil, 100000)
+        end
+      }
+    )
+    on_attach(client, bufnr)
+  end
+  
+  -- Autocmd that will actually be in charging of starting the whole thing
+  local nvim_metals_group = vim.api.nvim_create_augroup("nvim-metals", { clear = true })
+  vim.api.nvim_create_autocmd("FileType", {
+    -- NOTE: You may or may not want java included here. You will need it if you
+    -- want basic Java support but it may also conflict if you are using
+    -- something like nvim-jdtls which also works on a java filetype autocmd.
+    pattern = { "scala", "sbt", "java" },
+    callback = function()
+      require("metals").initialize_or_attach(metals_config)
+    end,
+    group = nvim_metals_group,
+  })
+
   -- -- java
   -- -- See `:help vim.lsp.start_client` for an overview of the supported `config` options.
   -- local config = {
   --   -- The command that starts the language server
   --   -- See: https://github.com/eclipse/eclipse.jdt.ls#running-from-the-command-line
   --   cmd = {
-  -- 
+  --
   --     -- 💀
   --     'java', -- or '/path/to/java11_or_newer/bin/java'
   --             -- depends on if `java` is in your $PATH env variable and if it points to the right version.
-  -- 
+  --
   --     '-Declipse.application=org.eclipse.jdt.ls.core.id1',
   --     '-Dosgi.bundles.defaultStartLevel=4',
   --     '-Declipse.product=org.eclipse.jdt.ls.core.product',
@@ -229,31 +385,31 @@ lua <<EOF
   --     '--add-modules=ALL-SYSTEM',
   --     '--add-opens', 'java.base/java.util=ALL-UNNAMED',
   --     '--add-opens', 'java.base/java.lang=ALL-UNNAMED',
-  -- 
+  --
   --     -- 💀
   --     '-jar', '/home/max/eclipse.jdt.ls/org.eclipse.jdt.ls.product/target/repository/plugins/org.eclipse.equinox.launcher_1.6.400.v20210924-0641.jar',
   --          -- ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^                                       ^^^^^^^^^^^^^^
   --          -- Must point to the                                                     Change this to
   --          -- eclipse.jdt.ls installation                                           the actual version
-  -- 
-  -- 
+  --
+  --
   --     -- 💀
   --     '-configuration', '/home/max/eclipse.jdt.ls/org.eclipse.jdt.ls.product/target/repository/config_linux',
   --                     -- ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^        ^^^^^^
   --                     -- Must point to the                      Change to one of `linux`, `win` or `mac`
   --                     -- eclipse.jdt.ls installation            Depending on your system.
-  -- 
-  -- 
+  --
+  --
   --     -- 💀
   --     -- See `data directory configuration` section in the README
   --     '-data', '/home/max/.eclipse.jdt.ls/dbz'
   --   },
-  -- 
+  --
   --   -- 💀
   --   -- This is the default if not provided, you can remove it. Or adjust as needed.
   --   -- One dedicated LSP server & client will be started per unique root_dir
   --   root_dir = require('jdtls.setup').find_root({'.git', 'mvnw', 'gradlew'}),
-  -- 
+  --
   --   -- Here you can configure eclipse.jdt.ls specific settings
   --   -- See https://github.com/eclipse/eclipse.jdt.ls/wiki/Running-the-JAVA-LS-server-from-the-command-line#initialize-request
   --   -- for a list of options
@@ -261,7 +417,7 @@ lua <<EOF
   --     java = {
   --     }
   --   },
-  -- 
+  --
   --   -- Language server `initializationOptions`
   --   -- You need to extend the `bundles` with paths to jar files
   --   -- if you want to use additional eclipse.jdt.ls plugins.
@@ -278,8 +434,6 @@ lua <<EOF
   -- require('jdtls').start_or_attach(config)
 EOF
 
-autocmd BufWritePre *.go lua vim.lsp.buf.formatting_sync(nil, 10000)
-" autocmd BufWritePre *.go lua goimports(10000)
 endif
 
 " Statusline
@@ -291,32 +445,18 @@ function! LspStatus() abort
   return ''
 endfunction
 
-" Use <Tab> and <S-Tab> to navigate through popup menu
-inoremap <expr> <Tab>   pumvisible() ? "\<C-n>" : "\<Tab>"
-inoremap <expr> <S-Tab> pumvisible() ? "\<C-p>" : "\<S-Tab>"
-
 " Set completeopt to have a better completion experience
 set completeopt=menuone,noinsert,noselect
 
 " Avoid showing message extra message when using completion
 set shortmess+=c
 
-nnoremap <silent> gd          <cmd>lua vim.lsp.buf.definition()<CR>
-nnoremap <silent> K           <cmd>lua vim.lsp.buf.hover()<CR>
-nnoremap <silent> gi          <cmd>lua vim.lsp.buf.implementation()<CR>
-nnoremap <silent> gr          <cmd>lua require'telescope.builtin'.lsp_references{}<CR>
-nnoremap <silent> <leader>s   <cmd>lua require'telescope.builtin'.lsp_workspace_symbols{}<CR> 
-nnoremap <silent> gds         <cmd>lua vim.lsp.buf.document_symbol()<CR>
-nnoremap <silent> gws         <cmd>lua vim.lsp.buf.workspace_symbol()<CR>
-nnoremap <silent> <leader>rn  <cmd>lua vim.lsp.buf.rename()<CR>
-nnoremap <silent> <leader>f   <cmd>lua vim.lsp.buf.formatting()<CR>
-nnoremap <silent> <leader>ca  <cmd>lua vim.lsp.buf.code_action()<CR>
-
 if HasPlugin("neoformat")
 let g:neoformat_enabled_python = ['black']
 let g:neoformat_enabled_sql = ['pg_format']
 let g:neoformat_enabled_xml = ['tidy']
 let g:neoformat_enabled_go = []
+let g:neoformat_enabled_scala = []
 augroup fmt
   autocmd!
   au BufWritePre * try | undojoin | Neoformat | catch /^Vim\%((\a\+)\)\=:E790/ | finally | silent Neoformat | endtry
@@ -330,6 +470,7 @@ autocmd FileType proto setlocal ts=2 sts=2 sw=2 expandtab
 au BufRead,BufNewFile *.sls set filetype=yaml
 
 autocmd FileType proto nnoremap <silent> <buffer> <leader>pb  <cmd>e %:p:r.pb.go<CR>
+autocmd FileType go nnoremap <silent> <buffer> <leader>pb  <cmd>e %:p:r:r.proto<CR>
 
 set foldlevelstart=20
 
@@ -396,9 +537,9 @@ autocmd BufReadPost *
 \ | endif
 
 if HasPlugin("ale")
-	let g:ale_linters = {
-	\	'go': [],
-	\}
+  let g:ale_linters = {
+    \  'go': [],
+  \}
 endif
 
 set spell
@@ -432,3 +573,38 @@ xmap        S   <Plug>(vsnip-cut-text)
 let g:vsnip_filetypes = {}
 let g:vsnip_filetypes.javascriptreact = ['javascript']
 let g:vsnip_filetypes.typescriptreact = ['typescript']
+
+lua <<EOF
+vim.api.nvim_set_keymap("n", "<leader>xx", "<cmd>Trouble<cr>",
+  {silent = true, noremap = true}
+)
+vim.api.nvim_set_keymap("n", "<leader>xw", "<cmd>Trouble workspace_diagnostics<cr>",
+  {silent = true, noremap = true}
+)
+vim.api.nvim_set_keymap("n", "<leader>xd", "<cmd>Trouble document_diagnostics<cr>",
+  {silent = true, noremap = true}
+)
+vim.api.nvim_set_keymap("n", "<leader>xl", "<cmd>Trouble loclist<cr>",
+  {silent = true, noremap = true}
+)
+vim.api.nvim_set_keymap("n", "<leader>xq", "<cmd>Trouble quickfix<cr>",
+  {silent = true, noremap = true}
+)
+vim.api.nvim_set_keymap("n", "gR", "<cmd>Trouble lsp_references<cr>",
+  {silent = true, noremap = true}
+)
+
+local actions = require("telescope.actions")
+local trouble = require("trouble.providers.telescope")
+
+local telescope = require("telescope")
+
+telescope.setup {
+  defaults = {
+    mappings = {
+      i = { ["<c-t>"] = trouble.open_with_trouble },
+      n = { ["<c-t>"] = trouble.open_with_trouble },
+    },
+  },
+}
+EOF

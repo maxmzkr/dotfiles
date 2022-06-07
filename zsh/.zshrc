@@ -98,7 +98,7 @@ zstyle ':completion:*' verbose true
 
 zstyle ':completion:*:*:kill:*:processes' list-colors '=(#b) #([0-9]#)*=0=01;31'
 zstyle ':completion:*:kill:*' command 'ps -u $USER -o pid,%cpu,tty,cputime,cmd'
-set list-colors to enable filename colorizing
+# set list-colors to enable filename colorizing
 # preview directory's content with exa when completing cd
 # disable sort when completing `git checkout`
 zstyle ':completion:*:git-checkout:*' sort false
@@ -122,6 +122,7 @@ source /home/max/.gvm/scripts/gvm
 export PATH=/usr/local/go/bin:$PATH
 export PATH=/home/max/.local/bin:$PATH
 export PATH=/home/max/.bin:$PATH
+export PATH=/home/max/.local/share/coursier/bin:$PATH
 
 export NVM_DIR="$([ -z "${XDG_CONFIG_HOME-}" ] && printf %s "${HOME}/.nvm" || printf %s "${XDG_CONFIG_HOME}/nvm")"
 [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" # This loads nvm
