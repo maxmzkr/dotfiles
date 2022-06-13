@@ -1,5 +1,9 @@
 require('plugins')
 
+vim.cmd('set termguicolors')
+
+vim.cmd('set number')
+
 vim.cmd([[
   augroup packer_user_config
     autocmd!
@@ -425,6 +429,22 @@ require('gitsigns').setup {
 
 local gl = require('galaxyline')
 local colors = require('galaxyline.theme').default
+
+local colors = {
+  bg = '#073642',
+  line_bg = '#073642',
+  yellow = '#b58900',
+  cyan = '#2aa198',
+  darkblue = '#081633',
+  green = '#859900',
+  orange = '#cb4b16',
+  purple = '#5d4d7a',
+  magenta = '#d33682',
+  grey = '#c0c0c0',
+  blue = '#268bd2',
+  red = '#dc322f'
+}
+
 local condition = require('galaxyline.condition')
 local gls = gl.section
 gl.short_line_list = {'NvimTree','vista','dbui','packer'}
@@ -477,7 +497,15 @@ gls.left[5] = {
 
 gls.left[6] = {
   LineInfo = {
-    provider = 'LineColumn',
+    provider = function()
+      local line = vim.fn.line('.')
+      local col = vim.fn.col('.')
+      local virtcol = vim.fn.virtcol('.')
+      if col ~= virtcol then
+        return string.format("%3d :%2d-%2d ", line, col, virtcol)
+      end
+      return string.format("%3d :%2d ", line, col)
+    end,
     separator = ' ',
     separator_highlight = {'NONE',colors.bg},
     highlight = {colors.fg,colors.bg},

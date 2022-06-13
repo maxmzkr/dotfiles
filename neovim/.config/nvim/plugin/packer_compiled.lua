@@ -144,6 +144,11 @@ _G.packer_plugins = {
     path = "/home/max/.local/share/nvim/site/pack/packer/start/nvim-dap-go",
     url = "https://github.com/leoluz/nvim-dap-go"
   },
+  ["nvim-gps"] = {
+    loaded = true,
+    path = "/home/max/.local/share/nvim/site/pack/packer/start/nvim-gps",
+    url = "https://github.com/SmiteshP/nvim-gps"
+  },
   ["nvim-jdtls"] = {
     loaded = true,
     path = "/home/max/.local/share/nvim/site/pack/packer/start/nvim-jdtls",
@@ -204,11 +209,6 @@ _G.packer_plugins = {
     path = "/home/max/.local/share/nvim/site/pack/packer/start/vim-argumentative",
     url = "https://github.com/PeterRincker/vim-argumentative"
   },
-  ["vim-colors-solarized"] = {
-    loaded = true,
-    path = "/home/max/.local/share/nvim/site/pack/packer/start/vim-colors-solarized",
-    url = "https://github.com/altercation/vim-colors-solarized"
-  },
   ["vim-fugitive"] = {
     loaded = true,
     path = "/home/max/.local/share/nvim/site/pack/packer/start/vim-fugitive",
@@ -218,6 +218,11 @@ _G.packer_plugins = {
     loaded = true,
     path = "/home/max/.local/share/nvim/site/pack/packer/start/vim-rhubarb",
     url = "https://github.com/tpope/vim-rhubarb"
+  },
+  ["vim-solarized"] = {
+    loaded = true,
+    path = "/home/max/.local/share/nvim/site/pack/packer/start/vim-solarized",
+    url = "https://github.com/ericbn/vim-solarized"
   },
   ["vim-terraform"] = {
     loaded = true,

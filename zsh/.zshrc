@@ -6,6 +6,7 @@ fi
 
 export SSH_AUTH_SOCK=/run/user/1000/gnupg/S.gpg-agent.ssh
 export EDITOR='vim'
+export TERM="screen-256color"
 
 HISTFILE="$HOME/.zsh_history"
 HISTSIZE=10000000

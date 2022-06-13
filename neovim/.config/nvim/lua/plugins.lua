@@ -21,7 +21,7 @@ return require('packer').startup(function(use)
   use 'golang/vscode-go'
   use 'neovim/nvim-lspconfig'
   use 'vim-python/python-syntax'
-  use 'altercation/vim-colors-solarized'
+  use 'ericbn/vim-solarized'
   use 'sbdchd/neoformat'
   use 'nvim-lua/lsp-status.nvim'
   use 'tpope/vim-fugitive'
@@ -53,6 +53,11 @@ return require('packer').startup(function(use)
     requires = 'kyazdani42/nvim-web-devicons'
   }
   use 'lewis6991/gitsigns.nvim'
+  use {
+    "SmiteshP/nvim-gps",
+    requires = "nvim-treesitter/nvim-treesitter"
+  }
+
 
   -- Automatically set up your configuration after cloning packer.nvim
   -- Put this at the end after all plugins
