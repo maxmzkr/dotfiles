@@ -58,6 +58,9 @@ return require('packer').startup(function(use)
     requires = "nvim-treesitter/nvim-treesitter"
   }
 
+  use 'Yggdroot/indentLine'
+  use 'github/copilot.vim'
+
 
   -- Automatically set up your configuration after cloning packer.nvim
   -- Put this at the end after all plugins

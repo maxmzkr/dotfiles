@@ -124,6 +124,7 @@ export PATH=/usr/local/go/bin:$PATH
 export PATH=/home/max/.local/bin:$PATH
 export PATH=/home/max/.bin:$PATH
 export PATH=/home/max/.local/share/coursier/bin:$PATH
+export PATH="${KREW_ROOT:-$HOME/.krew}/bin:$PATH"
 
 export NVM_DIR="$([ -z "${XDG_CONFIG_HOME-}" ] && printf %s "${HOME}/.nvm" || printf %s "${XDG_CONFIG_HOME}/nvm")"
 [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" # This loads nvm
@@ -172,6 +173,7 @@ alias l='ls -CF'
 
 alias ipdb='ipdb3 '
 alias sudo='nocorrect sudo '
+alias watch='watch '
 
 notif () {
     $@ && paplay /usr/share/sounds/gnome/default/alerts/bark.ogg

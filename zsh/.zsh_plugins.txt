@@ -37,7 +37,9 @@ ohmyzsh/ohmyzsh path:plugins/ubuntu
 ohmyzsh/ohmyzsh path:plugins/virtualenv
 romkatv/powerlevel10k
 zdharma-continuum/zsh-diff-so-fancy 
+zsh-users/zsh-autosuggestions
 zsh-users/zsh-completions
+zsh-users/zsh-syntax-highlighting
 
 # Must be at end of file
 Aloxaf/fzf-tab

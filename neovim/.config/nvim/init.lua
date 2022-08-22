@@ -205,8 +205,11 @@ local metals_config = require("metals").bare_config()
 
 -- Example of settings
 metals_config.settings = {
-showImplicitArguments = true,
-excludedPackages = { "akka.actor.typed.javadsl", "com.github.swagger.akka.javadsl" },
+  showImplicitArguments = true,
+  showImplicitConversionsAndClasses = true,
+  showInferredType = true,
+  excludedPackages = { "akka.actor.typed.javadsl", "com.github.swagger.akka.javadsl" },
+  serverVersion = "0.11.8-SNAPSHOT"
 }
 local function map(mode, lhs, rhs, opts)
 local options = { noremap = true }
@@ -246,6 +249,13 @@ map("n", "<leader>dso", [[<cmd>lua require"dap".step_over()<CR>]])
 map("n", "<leader>dsi", [[<cmd>lua require"dap".step_into()<CR>]])
 map("n", "<leader>dl", [[<cmd>lua require"dap".run_last()<CR>]])
 
+-- *READ THIS*
+-- I *highly* recommend setting statusBarProvider to true, however if you do,
+-- you *have* to have a setting to display this in your statusline or else
+-- you'll not see any messages from metals. There is more info in the help
+-- docs about this
+metals_config.init_options.statusBarProvider = "on"
+
 -- Example if you are using cmp how to make sure the correct capabilities for snippets are set
 metals_config.capabilities = capabilities
 
@@ -272,17 +282,19 @@ runType = "testTarget",
 }
 
 metals_config.on_attach = function(client, bufnr)
-require("metals").setup_dap()
-vim.api.nvim_create_autocmd(
-{"BufWritePre"},
-{
-pattern = {"<buffer>"},
-callback = function()
-  vim.lsp.buf.format(nil, 100000)
-end
-}
-)
-on_attach(client, bufnr)
+  require("metals").setup_dap()
+  vim.api.nvim_create_autocmd(
+    {"BufWritePost"},
+    {
+      pattern = {"<buffer>"},
+      callback = function()
+        -- require("metals").run_scalafix()
+        vim.lsp.buf.format(nil, 100000)
+	vim.cmd("noautocmd write")
+      end
+    }
+  )
+  on_attach(client, bufnr)
 end
 
 -- Autocmd that will actually be in charging of starting the whole thing
@@ -465,6 +477,7 @@ gls.left[2] = {
                           S=colors.orange,[''] = colors.orange,
                           ic = colors.yellow,R = colors.violet,Rv = colors.violet,
                           cv = colors.red,ce=colors.red, r = colors.cyan,
+			  R = colors.cyan,
                           rm = colors.cyan, ['r?'] = colors.cyan,
                           ['!']  = colors.red,t = colors.red}
       vim.api.nvim_command('hi GalaxyViMode guifg='..mode_color[vim.fn.mode()] ..' guibg='..colors.bg)
@@ -567,6 +580,15 @@ gls.mid[1] = {
   }
 }
 
+gls.mid[2] = {
+    MetalsStatus = {
+      provider = function()
+        return "  " .. (vim.g["metals_status"] or "")
+      end,
+      highlight = { colors.yellow, colors.bg,'bold' },
+    },
+}
+
 gls.right[1] = {
   FileEncode = {
     provider = 'FileEncode',
@@ -661,6 +683,10 @@ gls.short_line_right[1] = {
   }
 }
 
+vim.g["indentLine_char_list"] = {''}
+vim.g["vim_json_conceal"] = 0
+vim.g["markdown_syntax_conceal"] = 0
+
 vim.api.nvim_exec(
 [[
 filetype plugin indent on
@@ -691,6 +717,7 @@ function! LspStatus() abort
   return ''
 endfunction
 
+
 " Set completeopt to have a better completion experience
 set completeopt=menuone,noinsert,noselect
 
@@ -702,6 +729,7 @@ let g:neoformat_enabled_sql = ['pg_format']
 let g:neoformat_enabled_xml = ['tidy']
 let g:neoformat_enabled_go = []
 let g:neoformat_enabled_scala = []
+let g:neoformat_enabled_sbt = []
 augroup fmt
   autocmd!
   au BufWritePre * try | undojoin | Neoformat | catch /^Vim\%((\a\+)\)\=:E790/ | finally | silent Neoformat | endtry
@@ -810,6 +838,8 @@ let g:vsnip_filetypes = {}
 let g:vsnip_filetypes.javascriptreact = ['javascript']
 let g:vsnip_filetypes.typescriptreact = ['typescript']
 
+set conceallevel=0
+let g:vim_json_syntax_conceal = 0
+
 ]],
 true)
-
