@@ -1,8 +1,8 @@
-require('plugins')
+require("plugins")
 
-vim.cmd('set termguicolors')
+vim.cmd("set termguicolors")
 
-vim.cmd('set number')
+vim.cmd("set number")
 
 vim.cmd([[
   augroup packer_user_config
@@ -12,192 +12,195 @@ vim.cmd([[
 ]])
 
 -- Setup treesitter
-require'nvim-treesitter.configs'.setup {
--- A list of parser names, or "all"
-ensure_installed = { "go" },
+require("nvim-treesitter.configs").setup({
+  -- A list of parser names, or "all"
+  ensure_installed = { "go" },
 
--- Install parsers synchronously (only applied to `ensure_installed`)
-sync_install = false,
+  -- Install parsers synchronously (only applied to `ensure_installed`)
+  sync_install = false,
 
--- List of parsers to ignore installing (for "all")
--- ignore_install = { "javascript" },
+  -- List of parsers to ignore installing (for "all")
+  -- ignore_install = { "javascript" },
 
-highlight = {
--- `false` will disable the whole extension
-enable = true,
+  highlight = {
+    -- `false` will disable the whole extension
+    enable = true,
 
--- NOTE: these are the names of the parsers and not the filetype. (for example if you want to
--- disable highlighting for the `tex` filetype, you need to include `latex` in this list as this is
--- the name of the parser)
--- list of language that will be disabled
--- disable = { "c", "rust" },
+    -- NOTE: these are the names of the parsers and not the filetype. (for example if you want to
+    -- disable highlighting for the `tex` filetype, you need to include `latex` in this list as this is
+    -- the name of the parser)
+    -- list of language that will be disabled
+    -- disable = { "c", "rust" },
 
--- Setting this to true will run `:h syntax` and tree-sitter at the same time.
--- Set this to `true` if you depend on 'syntax' being enabled (like for indentation).
--- Using this option may slow down your editor, and you may see some duplicate highlights.
--- Instead of true it can also be a list of languages
-additional_vim_regex_highlighting = false,
-},
-}
+    -- Setting this to true will run `:h syntax` and tree-sitter at the same time.
+    -- Set this to `true` if you depend on 'syntax' being enabled (like for indentation).
+    -- Using this option may slow down your editor, and you may see some duplicate highlights.
+    -- Instead of true it can also be a list of languages
+    additional_vim_regex_highlighting = false,
+  },
+})
 
 -- Setup nvim-cmp.
-local cmp = require'cmp'
-local types = require'cmp.types'
+local cmp = require("cmp")
+local types = require("cmp.types")
 
 cmp.setup({
-preselect=cmp.PreselectMode.Item,
-mapping = {
-['<C-b>'] = cmp.mapping(cmp.mapping.scroll_docs(-4), { 'i', 'c' }),
-['<C-f>'] = cmp.mapping(cmp.mapping.scroll_docs(4), { 'i', 'c' }),
-['<C-Space>'] = cmp.mapping(cmp.mapping.complete(), { 'i', 'c' }),
-['<C-y>'] = cmp.config.disable, -- Specify `cmp.config.disable` if you want to remove the default `<C-y>` mapping.
-['<C-e>'] = cmp.mapping({
-i = cmp.mapping.abort(),
-c = cmp.mapping.close(),
-}),
-['<C-n>'] = cmp.mapping(cmp.mapping.select_next_item({ behavior = types.cmp.SelectBehavior.Insert }), { 'i', 'c' }),
-['<C-p>'] = cmp.mapping(cmp.mapping.select_prev_item({ behavior = types.cmp.SelectBehavior.Insert }), { 'i', 'c' }),
-['<CR>'] = cmp.mapping.confirm({ select = true }), -- Accept currently selected item. Set `select` to `false` to only confirm explicitly selected items.
-},
-snippet = {
--- REQUIRED - you must specify a snippet engine
-expand = function(args)
-vim.fn["vsnip#anonymous"](args.body) -- For `vsnip` users.
--- require('luasnip').lsp_expand(args.body) -- For `luasnip` users.
--- require('snippy').expand_snippet(args.body) -- For `snippy` users.
--- vim.fn["UltiSnips#Anon"](args.body) -- For `ultisnips` users.
-end,
-},
-window = {
--- completion = cmp.config.window.bordered(),
--- documentation = cmp.config.window.bordered(),
-},
-sources = cmp.config.sources({
-{ name = 'nvim_lsp' },
-{ name = 'vsnip' }, -- For vsnip users.
--- { name = 'luasnip' }, -- For luasnip users.
--- { name = 'ultisnips' }, -- For ultisnips users.
--- { name = 'snippy' }, -- For snippy users.
-}, {
-{ name = 'buffer' },
-}),
-sorting = {
-comparators = {
-cmp.config.compare.recently_used,
-cmp.config.compare.exact,
-cmp.config.compare.score,
-cmp.config.compare.length,
-cmp.config.compare.sort_text,
-cmp.config.compare.kind,
-cmp.config.compare.order,
-cmp.config.compare.offset,
-},
-},
-experimental = {
-ghost_text = true
-}
+  preselect = cmp.PreselectMode.Item,
+  mapping = {
+    ["<C-b>"] = cmp.mapping(cmp.mapping.scroll_docs(-4), { "i", "c" }),
+    ["<C-f>"] = cmp.mapping(cmp.mapping.scroll_docs(4), { "i", "c" }),
+    ["<C-Space>"] = cmp.mapping(cmp.mapping.complete(), { "i", "c" }),
+    ["<C-y>"] = cmp.config.disable, -- Specify `cmp.config.disable` if you want to remove the default `<C-y>` mapping.
+    ["<C-e>"] = cmp.mapping({
+      i = cmp.mapping.abort(),
+      c = cmp.mapping.close(),
+    }),
+    ["<C-n>"] = cmp.mapping(cmp.mapping.select_next_item({ behavior = types.cmp.SelectBehavior.Insert }), {
+      "i",
+      "c",
+    }),
+    ["<C-p>"] = cmp.mapping(cmp.mapping.select_prev_item({ behavior = types.cmp.SelectBehavior.Insert }), {
+      "i",
+      "c",
+    }),
+    ["<CR>"] = cmp.mapping.confirm({ select = true }), -- Accept currently selected item. Set `select` to `false` to only confirm explicitly selected items.
+  },
+  snippet = {
+    -- REQUIRED - you must specify a snippet engine
+    expand = function(args)
+      vim.fn["vsnip#anonymous"](args.body) -- For `vsnip` users.
+      -- require('luasnip').lsp_expand(args.body) -- For `luasnip` users.
+      -- require('snippy').expand_snippet(args.body) -- For `snippy` users.
+      -- vim.fn["UltiSnips#Anon"](args.body) -- For `ultisnips` users.
+    end,
+  },
+  window = {
+    -- completion = cmp.config.window.bordered(),
+    -- documentation = cmp.config.window.bordered(),
+  },
+  sources = cmp.config.sources({
+    { name = "nvim_lsp" },
+    { name = "vsnip" }, -- For vsnip users.
+    -- { name = 'luasnip' }, -- For luasnip users.
+    -- { name = 'ultisnips' }, -- For ultisnips users.
+    -- { name = 'snippy' }, -- For snippy users.
+  }, {
+    { name = "buffer" },
+  }),
+  sorting = {
+    comparators = {
+      cmp.config.compare.recently_used,
+      cmp.config.compare.exact,
+      cmp.config.compare.score,
+      cmp.config.compare.length,
+      cmp.config.compare.sort_text,
+      cmp.config.compare.kind,
+      cmp.config.compare.order,
+      cmp.config.compare.offset,
+    },
+  },
+  experimental = {
+    ghost_text = true,
+  },
 })
 
 -- Use buffer source for `/` (if you enabled `native_menu`, this won't work anymore).
-cmp.setup.cmdline('/', {
-sources = {
-{ name = 'buffer' }
-}
+cmp.setup.cmdline("/", {
+  sources = {
+    { name = "buffer" },
+  },
 })
 
 -- Use cmdline & path source for ':' (if you enabled `native_menu`, this won't work anymore).
-cmp.setup.cmdline(':', {
-sources = cmp.config.sources({
-{ name = 'path' }
-}, {
-{ name = 'cmdline' }
-})
+cmp.setup.cmdline(":", {
+  sources = cmp.config.sources({
+    { name = "path" },
+  }, {
+    { name = "cmdline" },
+  }),
 })
 
 -- Setup lspconfig.
-local capabilities = require('cmp_nvim_lsp').update_capabilities(vim.lsp.protocol.make_client_capabilities())
-local lsp_status = require('lsp-status')
+local capabilities = require("cmp_nvim_lsp").update_capabilities(vim.lsp.protocol.make_client_capabilities())
+local lsp_status = require("lsp-status")
 lsp_status.register_progress()
 
-lspconfig = require "lspconfig"
+lspconfig = require("lspconfig")
 
 function organizeImports(client, timeoutms)
-local context = { source = { organizeImports = true, gofumpt = 1 } }
-vim.validate { context = { context, "t", true } }
+  local context = { source = { organizeImports = true, gofumpt = 1 } }
+  vim.validate({ context = { context, "t", true } })
 
-local params = vim.lsp.util.make_range_params()
-params.context = context
+  local params = vim.lsp.util.make_range_params()
+  params.context = context
 
-local method = "textDocument/codeAction"
-local resp = vim.lsp.buf_request_sync(0, method, params, timeoutms)
-if resp and resp[1] then
-local result = resp[1].result
-if result and result[1] then
-local edit = result[1].edit
-vim.lsp.util.apply_workspace_edit(edit, client.offset_encoding)
-end
-end
+  local method = "textDocument/codeAction"
+  local resp = vim.lsp.buf_request_sync(0, method, params, timeoutms)
+  if resp and resp[1] then
+    local result = resp[1].result
+    if result and result[1] then
+      local edit = result[1].edit
+      vim.lsp.util.apply_workspace_edit(edit, client.offset_encoding)
+    end
+  end
 end
 
 local dap = require("dap")
-require('dap-go').setup()
+require("dap-go").setup()
 
-lspconfig.gopls.setup {
-on_attach = function (client, bufnr)
-vim.api.nvim_create_autocmd(
-{"BufWritePre"},
-{
-  pattern = {"<buffer>"},
-  callback = function()
-    organizeImports(client, 1000)
-    vim.lsp.buf.format(nil, 100000)
-  end
-}
-)
-lsp_status.on_attach(client, bufnr)
-end,
-capabilities = lsp_status.capabilities,
-cmd = {"gopls", "-vv", "-rpc.trace", "-logfile", "auto"},
-settings = {
-gopls = {
-hoverKind = "FullDocumentation",
-staticcheck = true,
-gofumpt = true,
-['local'] = "github.com/censys",
-},
-},
-}
+lspconfig.gopls.setup({
+  on_attach = function(client, bufnr)
+    vim.api.nvim_create_autocmd({ "BufWritePre" }, {
+      pattern = { "<buffer>" },
+      callback = function()
+        organizeImports(client, 1000)
+        vim.lsp.buf.format(nil, 100000)
+      end,
+    })
+    lsp_status.on_attach(client, bufnr)
+  end,
+  capabilities = lsp_status.capabilities,
+  cmd = { "gopls", "-vv", "-rpc.trace", "-logfile", "auto" },
+  settings = {
+    gopls = {
+      hoverKind = "FullDocumentation",
+      staticcheck = true,
+      gofumpt = true,
+      ["local"] = "github.com/censys",
+    },
+  },
+})
 
 do
-local method = "textDocument/publishDiagnostics"
-local default_callback = vim.lsp.handlers[method]
-vim.lsp.handlers[method] = function(err, method, result, client_id)
-default_callback(err, method, result, client_id)
-if result and result.diagnostics then
-for _, v in ipairs(result.diagnostics) do
-  v.bufnr = client_id
-  v.lnum = v.range.start.line + 1
-  v.col = v.range.start.character + 1
-  v.text = v.message
-end
-vim.lsp.util.set_qflist(result.diagnostics)
-end
-end
+  local method = "textDocument/publishDiagnostics"
+  local default_callback = vim.lsp.handlers[method]
+  vim.lsp.handlers[method] = function(err, method, result, client_id)
+    default_callback(err, method, result, client_id)
+    if result and result.diagnostics then
+      for _, v in ipairs(result.diagnostics) do
+        v.bufnr = client_id
+        v.lnum = v.range.start.line + 1
+        v.col = v.range.start.character + 1
+        v.text = v.message
+      end
+      vim.lsp.util.set_qflist(result.diagnostics)
+    end
+  end
 end
 
 -- python
-lspconfig.jedi_language_server.setup{
-on_attach = lsp_status.on_attach,
-capabilities = lsp_status.capabilities,
-}
+lspconfig.jedi_language_server.setup({
+  on_attach = lsp_status.on_attach,
+  capabilities = lsp_status.capabilities,
+})
 
 -- typescript
-require'lspconfig'.tsserver.setup{
-on_attach = lsp_status.on_attach,
-capabilities = lsp_status.capabilities,
-}
+require("lspconfig").tsserver.setup({
+  on_attach = lsp_status.on_attach,
+  capabilities = lsp_status.capabilities,
+})
 
-require'lspconfig'.clangd.setup{}
+require("lspconfig").clangd.setup({})
 
 vim.opt_global.shortmess:remove("F"):append("c")
 
@@ -209,14 +212,14 @@ metals_config.settings = {
   showImplicitConversionsAndClasses = true,
   showInferredType = true,
   excludedPackages = { "akka.actor.typed.javadsl", "com.github.swagger.akka.javadsl" },
-  serverVersion = "0.11.8-SNAPSHOT"
+  serverVersion = "0.11.8-SNAPSHOT",
 }
 local function map(mode, lhs, rhs, opts)
-local options = { noremap = true }
-if opts then
-options = vim.tbl_extend("force", options, opts)
-end
-vim.api.nvim_set_keymap(mode, lhs, rhs, options)
+  local options = { noremap = true }
+  if opts then
+    options = vim.tbl_extend("force", options, opts)
+  end
+  vim.api.nvim_set_keymap(mode, lhs, rhs, options)
 end
 
 -- LSP mappings
@@ -259,55 +262,51 @@ metals_config.init_options.statusBarProvider = "on"
 -- Example if you are using cmp how to make sure the correct capabilities for snippets are set
 metals_config.capabilities = capabilities
 
-
 -- Debug settings if you're using nvim-dap
 dap.configurations.scala = {
-{
-type = "scala",
-request = "launch",
-name = "RunOrTest",
-metals = {
-runType = "runOrTestFile",
---args = { "firstArg", "secondArg", "thirdArg" }, -- here just as an example
-},
-},
-{
-type = "scala",
-request = "launch",
-name = "Test Target",
-metals = {
-runType = "testTarget",
-},
-},
+  {
+    type = "scala",
+    request = "launch",
+    name = "RunOrTest",
+    metals = {
+      runType = "runOrTestFile",
+      --args = { "firstArg", "secondArg", "thirdArg" }, -- here just as an example
+    },
+  },
+  {
+    type = "scala",
+    request = "launch",
+    name = "Test Target",
+    metals = {
+      runType = "testTarget",
+    },
+  },
 }
 
 metals_config.on_attach = function(client, bufnr)
   require("metals").setup_dap()
-  vim.api.nvim_create_autocmd(
-    {"BufWritePost"},
-    {
-      pattern = {"<buffer>"},
-      callback = function()
-        -- require("metals").run_scalafix()
-        vim.lsp.buf.format(nil, 100000)
-	vim.cmd("noautocmd write")
-      end
-    }
-  )
+  vim.api.nvim_create_autocmd({ "BufWritePost" }, {
+    pattern = { "<buffer>" },
+    callback = function()
+      -- require("metals").run_scalafix()
+      vim.lsp.buf.format(nil, 100000)
+      vim.cmd("noautocmd write")
+    end,
+  })
   on_attach(client, bufnr)
 end
 
 -- Autocmd that will actually be in charging of starting the whole thing
 local nvim_metals_group = vim.api.nvim_create_augroup("nvim-metals", { clear = true })
 vim.api.nvim_create_autocmd("FileType", {
--- NOTE: You may or may not want java included here. You will need it if you
--- want basic Java support but it may also conflict if you are using
--- something like nvim-jdtls which also works on a java filetype autocmd.
-pattern = { "scala", "sbt", "java" },
-callback = function()
-require("metals").initialize_or_attach(metals_config)
-end,
-group = nvim_metals_group,
+  -- NOTE: You may or may not want java included here. You will need it if you
+  -- want basic Java support but it may also conflict if you are using
+  -- something like nvim-jdtls which also works on a java filetype autocmd.
+  pattern = { "scala", "sbt", "java" },
+  callback = function()
+    require("metals").initialize_or_attach(metals_config)
+  end,
+  group = nvim_metals_group,
 })
 
 -- -- java
@@ -378,317 +377,325 @@ group = nvim_metals_group,
 -- -- or attaches to an existing client & server depending on the `root_dir`.
 -- require('jdtls').start_or_attach(config)
 --
-vim.api.nvim_set_keymap("n", "<leader>xx", "<cmd>Trouble<cr>",
-  {silent = true, noremap = true}
-)
-vim.api.nvim_set_keymap("n", "<leader>xw", "<cmd>Trouble workspace_diagnostics<cr>",
-  {silent = true, noremap = true}
-)
-vim.api.nvim_set_keymap("n", "<leader>xd", "<cmd>Trouble document_diagnostics<cr>",
-  {silent = true, noremap = true}
-)
-vim.api.nvim_set_keymap("n", "<leader>xl", "<cmd>Trouble loclist<cr>",
-  {silent = true, noremap = true}
-)
-vim.api.nvim_set_keymap("n", "<leader>xq", "<cmd>Trouble quickfix<cr>",
-  {silent = true, noremap = true}
-)
-vim.api.nvim_set_keymap("n", "gR", "<cmd>Trouble lsp_references<cr>",
-  {silent = true, noremap = true}
-)
+vim.api.nvim_set_keymap("n", "<leader>xx", "<cmd>Trouble<cr>", { silent = true, noremap = true })
+vim.api.nvim_set_keymap("n", "<leader>xw", "<cmd>Trouble workspace_diagnostics<cr>", { silent = true, noremap = true })
+vim.api.nvim_set_keymap("n", "<leader>xd", "<cmd>Trouble document_diagnostics<cr>", { silent = true, noremap = true })
+vim.api.nvim_set_keymap("n", "<leader>xl", "<cmd>Trouble loclist<cr>", { silent = true, noremap = true })
+vim.api.nvim_set_keymap("n", "<leader>xq", "<cmd>Trouble quickfix<cr>", { silent = true, noremap = true })
+vim.api.nvim_set_keymap("n", "gR", "<cmd>Trouble lsp_references<cr>", { silent = true, noremap = true })
 
 local actions = require("telescope.actions")
 local trouble = require("trouble.providers.telescope")
 
 local telescope = require("telescope")
 
-telescope.setup {
+telescope.setup({
   defaults = {
     mappings = {
       i = { ["<c-t>"] = trouble.open_with_trouble },
       n = { ["<c-t>"] = trouble.open_with_trouble },
     },
   },
-}
+})
 
-require('gitsigns').setup {
+require("gitsigns").setup({
   signs = {
-    add = {hl = 'GitGutterAdd', text = '▋'},
-    change = {hl = 'GitGutterChange',text= '▋'},
-    delete = {hl= 'GitGutterDelete', text = '▋'},
-    topdelete = {hl ='GitGutterDeleteChange',text = '▔'},
-    changedelete = {hl = 'GitGutterChange', text = '▎'},
+    add = { hl = "GitGutterAdd", text = "▋" },
+    change = { hl = "GitGutterChange", text = "▋" },
+    delete = { hl = "GitGutterDelete", text = "▋" },
+    topdelete = { hl = "GitGutterDeleteChange", text = "▔" },
+    changedelete = { hl = "GitGutterChange", text = "▎" },
   },
   keymaps = {
-     -- Default keymap options
-     noremap = true,
-     buffer = true,
+    -- Default keymap options
+    noremap = true,
+    buffer = true,
 
-     ['n ]g'] = { expr = true, "&diff ? ']g' : '<cmd>lua require\"gitsigns\".next_hunk()<CR>'"},
-     ['n [g'] = { expr = true, "&diff ? '[g' : '<cmd>lua require\"gitsigns\".prev_hunk()<CR>'"},
+    ["n ]g"] = { expr = true, "&diff ? ']g' : '<cmd>lua require\"gitsigns\".next_hunk()<CR>'" },
+    ["n [g"] = { expr = true, "&diff ? '[g' : '<cmd>lua require\"gitsigns\".prev_hunk()<CR>'" },
 
-     ['n <leader>hs'] = '<cmd>lua require"gitsigns".stage_hunk()<CR>',
-     ['n <leader>hu'] = '<cmd>lua require"gitsigns".undo_stage_hunk()<CR>',
-     ['n <leader>hr'] = '<cmd>lua require"gitsigns".reset_hunk()<CR>',
-     ['n <leader>hp'] = '<cmd>lua require"gitsigns".preview_hunk()<CR>',
-     ['n <leader>hb'] = '<cmd>lua require"gitsigns".blame_line()<CR>',
+    ["n <leader>hs"] = '<cmd>lua require"gitsigns".stage_hunk()<CR>',
+    ["n <leader>hu"] = '<cmd>lua require"gitsigns".undo_stage_hunk()<CR>',
+    ["n <leader>hr"] = '<cmd>lua require"gitsigns".reset_hunk()<CR>',
+    ["n <leader>hp"] = '<cmd>lua require"gitsigns".preview_hunk()<CR>',
+    ["n <leader>hb"] = '<cmd>lua require"gitsigns".blame_line()<CR>',
 
-     -- Text objects
-     ['o ih'] = ':<C-U>lua require"gitsigns".text_object()<CR>',
-     ['x ih'] = ':<C-U>lua require"gitsigns".text_object()<CR>'
-   },
-}
+    -- Text objects
+    ["o ih"] = ':<C-U>lua require"gitsigns".text_object()<CR>',
+    ["x ih"] = ':<C-U>lua require"gitsigns".text_object()<CR>',
+  },
+})
 
-local gl = require('galaxyline')
-local colors = require('galaxyline.theme').default
+local gl = require("galaxyline")
+local colors = require("galaxyline.theme").default
 
 local colors = {
-  bg = '#073642',
-  line_bg = '#073642',
-  yellow = '#b58900',
-  cyan = '#2aa198',
-  darkblue = '#081633',
-  green = '#859900',
-  orange = '#cb4b16',
-  purple = '#5d4d7a',
-  magenta = '#d33682',
-  grey = '#c0c0c0',
-  blue = '#268bd2',
-  red = '#dc322f'
+  bg = "#073642",
+  line_bg = "#073642",
+  yellow = "#b58900",
+  cyan = "#2aa198",
+  darkblue = "#081633",
+  green = "#859900",
+  orange = "#cb4b16",
+  purple = "#5d4d7a",
+  magenta = "#d33682",
+  grey = "#c0c0c0",
+  blue = "#268bd2",
+  red = "#dc322f",
 }
 
-local condition = require('galaxyline.condition')
+local condition = require("galaxyline.condition")
 local gls = gl.section
-gl.short_line_list = {'NvimTree','vista','dbui','packer'}
+gl.short_line_list = { "NvimTree", "vista", "dbui", "packer" }
 
 gls.left[1] = {
   RainbowRed = {
-    provider = function() return '▊ ' end,
-    highlight = {colors.blue,colors.bg}
+    provider = function()
+      return "▊ "
+    end,
+    highlight = { colors.blue, colors.bg },
   },
 }
 gls.left[2] = {
   ViMode = {
     provider = function()
       -- auto change color according the vim mode
-      local mode_color = {n = colors.red, i = colors.green,v=colors.blue,
-                          [''] = colors.blue,V=colors.blue,
-                          c = colors.magenta,no = colors.red,s = colors.orange,
-                          S=colors.orange,[''] = colors.orange,
-                          ic = colors.yellow,R = colors.violet,Rv = colors.violet,
-                          cv = colors.red,ce=colors.red, r = colors.cyan,
-			  R = colors.cyan,
-                          rm = colors.cyan, ['r?'] = colors.cyan,
-                          ['!']  = colors.red,t = colors.red}
-      vim.api.nvim_command('hi GalaxyViMode guifg='..mode_color[vim.fn.mode()] ..' guibg='..colors.bg)
-      return '  '
+      local mode_color = {
+        n = colors.red,
+        i = colors.green,
+        v = colors.blue,
+        [""] = colors.blue,
+        V = colors.blue,
+        c = colors.magenta,
+        no = colors.red,
+        s = colors.orange,
+        S = colors.orange,
+        [""] = colors.orange,
+        ic = colors.yellow,
+        R = colors.violet,
+        Rv = colors.violet,
+        cv = colors.red,
+        ce = colors.red,
+        r = colors.cyan,
+        R = colors.cyan,
+        rm = colors.cyan,
+        ["r?"] = colors.cyan,
+        ["!"] = colors.red,
+        t = colors.red,
+      }
+      vim.api.nvim_command("hi GalaxyViMode guifg=" .. mode_color[vim.fn.mode()] .. " guibg=" .. colors.bg)
+      return "  "
     end,
   },
 }
 gls.left[3] = {
   FileSize = {
-    provider = 'FileSize',
+    provider = "FileSize",
     condition = condition.buffer_not_empty,
-    highlight = {colors.fg,colors.bg}
-  }
+    highlight = { colors.fg, colors.bg },
+  },
 }
-gls.left[4] ={
+gls.left[4] = {
   FileIcon = {
-    provider = 'FileIcon',
+    provider = "FileIcon",
     condition = condition.buffer_not_empty,
-    highlight = {require('galaxyline.provider_fileinfo').get_file_icon_color,colors.bg},
+    highlight = { require("galaxyline.provider_fileinfo").get_file_icon_color, colors.bg },
   },
 }
 
 gls.left[5] = {
   FileName = {
-    provider = 'FileName',
+    provider = "FileName",
     condition = condition.buffer_not_empty,
-    highlight = {colors.fg,colors.bg,'bold'}
-  }
+    highlight = { colors.fg, colors.bg, "bold" },
+  },
 }
 
 gls.left[6] = {
   LineInfo = {
     provider = function()
-      local line = vim.fn.line('.')
-      local col = vim.fn.col('.')
-      local virtcol = vim.fn.virtcol('.')
+      local line = vim.fn.line(".")
+      local col = vim.fn.col(".")
+      local virtcol = vim.fn.virtcol(".")
       if col ~= virtcol then
         return string.format("%3d :%2d-%2d ", line, col, virtcol)
       end
       return string.format("%3d :%2d ", line, col)
     end,
-    separator = ' ',
-    separator_highlight = {'NONE',colors.bg},
-    highlight = {colors.fg,colors.bg},
+    separator = " ",
+    separator_highlight = { "NONE", colors.bg },
+    highlight = { colors.fg, colors.bg },
   },
 }
 
 gls.left[7] = {
   PerCent = {
-    provider = 'LinePercent',
-    separator = ' ',
-    separator_highlight = {'NONE',colors.bg},
-    highlight = {colors.fg,colors.bg,'bold'},
-  }
+    provider = "LinePercent",
+    separator = " ",
+    separator_highlight = { "NONE", colors.bg },
+    highlight = { colors.fg, colors.bg, "bold" },
+  },
 }
 
 gls.left[8] = {
   DiagnosticError = {
-    provider = 'DiagnosticError',
-    icon = '  ',
-    highlight = {colors.red,colors.bg}
-  }
+    provider = "DiagnosticError",
+    icon = "  ",
+    highlight = { colors.red, colors.bg },
+  },
 }
 gls.left[9] = {
   DiagnosticWarn = {
-    provider = 'DiagnosticWarn',
-    icon = '  ',
-    highlight = {colors.yellow,colors.bg},
-  }
+    provider = "DiagnosticWarn",
+    icon = "  ",
+    highlight = { colors.yellow, colors.bg },
+  },
 }
 
 gls.left[10] = {
   DiagnosticHint = {
-    provider = 'DiagnosticHint',
-    icon = '  ',
-    highlight = {colors.cyan,colors.bg},
-  }
+    provider = "DiagnosticHint",
+    icon = "  ",
+    highlight = { colors.cyan, colors.bg },
+  },
 }
 
 gls.left[11] = {
   DiagnosticInfo = {
-    provider = 'DiagnosticInfo',
-    icon = '  ',
-    highlight = {colors.blue,colors.bg},
-  }
+    provider = "DiagnosticInfo",
+    icon = "  ",
+    highlight = { colors.blue, colors.bg },
+  },
 }
 
 gls.mid[1] = {
   ShowLspClient = {
-    provider = 'GetLspClient',
-    condition = function ()
-      local tbl = {['dashboard'] = true,['']=true}
+    provider = "GetLspClient",
+    condition = function()
+      local tbl = { ["dashboard"] = true, [""] = true }
       if tbl[vim.bo.filetype] then
         return false
       end
       return true
     end,
-    icon = ' LSP:',
-    highlight = {colors.yellow,colors.bg,'bold'}
-  }
+    icon = " LSP:",
+    highlight = { colors.yellow, colors.bg, "bold" },
+  },
 }
 
 gls.mid[2] = {
-    MetalsStatus = {
-      provider = function()
-        return "  " .. (vim.g["metals_status"] or "")
-      end,
-      highlight = { colors.yellow, colors.bg,'bold' },
-    },
+  MetalsStatus = {
+    provider = function()
+      return "  " .. (vim.g["metals_status"] or "")
+    end,
+    highlight = { colors.yellow, colors.bg, "bold" },
+  },
 }
 
 gls.right[1] = {
   FileEncode = {
-    provider = 'FileEncode',
+    provider = "FileEncode",
     condition = condition.hide_in_width,
-    separator = ' ',
-    separator_highlight = {'NONE',colors.bg},
-    highlight = {colors.green,colors.bg,'bold'}
-  }
+    separator = " ",
+    separator_highlight = { "NONE", colors.bg },
+    highlight = { colors.green, colors.bg, "bold" },
+  },
 }
 
 gls.right[2] = {
   FileFormat = {
-    provider = 'FileFormat',
+    provider = "FileFormat",
     condition = condition.hide_in_width,
-    separator = ' ',
-    separator_highlight = {'NONE',colors.bg},
-    highlight = {colors.green,colors.bg,'bold'}
-  }
+    separator = " ",
+    separator_highlight = { "NONE", colors.bg },
+    highlight = { colors.green, colors.bg, "bold" },
+  },
 }
 
 gls.right[3] = {
   GitIcon = {
-    provider = function() return '  ' end,
+    provider = function()
+      return "  "
+    end,
     condition = condition.check_git_workspace,
-    separator = ' ',
-    separator_highlight = {'NONE',colors.bg},
-    highlight = {colors.violet,colors.bg,'bold'},
-  }
+    separator = " ",
+    separator_highlight = { "NONE", colors.bg },
+    highlight = { colors.violet, colors.bg, "bold" },
+  },
 }
 
 gls.right[4] = {
   GitBranch = {
-    provider = 'GitBranch',
+    provider = "GitBranch",
     condition = condition.check_git_workspace,
-    highlight = {colors.violet,colors.bg,'bold'},
-  }
+    highlight = { colors.violet, colors.bg, "bold" },
+  },
 }
 
 gls.right[5] = {
   DiffAdd = {
-    provider = 'DiffAdd',
+    provider = "DiffAdd",
     condition = condition.hide_in_width,
-    icon = '  ',
-    highlight = {colors.green,colors.bg},
-  }
+    icon = "  ",
+    highlight = { colors.green, colors.bg },
+  },
 }
 gls.right[6] = {
   DiffModified = {
-    provider = 'DiffModified',
+    provider = "DiffModified",
     condition = condition.hide_in_width,
-    icon = ' 柳',
-    highlight = {colors.orange,colors.bg},
-  }
+    icon = " 柳",
+    highlight = { colors.orange, colors.bg },
+  },
 }
 gls.right[7] = {
   DiffRemove = {
-    provider = 'DiffRemove',
+    provider = "DiffRemove",
     condition = condition.hide_in_width,
-    icon = '  ',
-    highlight = {colors.red,colors.bg},
-  }
+    icon = "  ",
+    highlight = { colors.red, colors.bg },
+  },
 }
 
 gls.right[8] = {
   RainbowBlue = {
-    provider = function() return ' ▊' end,
-    highlight = {colors.blue,colors.bg}
+    provider = function()
+      return " ▊"
+    end,
+    highlight = { colors.blue, colors.bg },
   },
 }
 
 gls.short_line_left[1] = {
   BufferType = {
-    provider = 'FileTypeName',
-    separator = ' ',
-    separator_highlight = {'NONE',colors.bg},
-    highlight = {colors.blue,colors.bg,'bold'}
-  }
+    provider = "FileTypeName",
+    separator = " ",
+    separator_highlight = { "NONE", colors.bg },
+    highlight = { colors.blue, colors.bg, "bold" },
+  },
 }
 
 gls.short_line_left[2] = {
   SFileName = {
-    provider =  'SFileName',
+    provider = "SFileName",
     condition = condition.buffer_not_empty,
-    highlight = {colors.fg,colors.bg,'bold'}
-  }
+    highlight = { colors.fg, colors.bg, "bold" },
+  },
 }
 
 gls.short_line_right[1] = {
   BufferIcon = {
-    provider= 'BufferIcon',
-    highlight = {colors.fg,colors.bg}
-  }
+    provider = "BufferIcon",
+    highlight = { colors.fg, colors.bg },
+  },
 }
 
-vim.g["indentLine_char_list"] = {''}
+vim.g["indentLine_char_list"] = { "" }
 vim.g["vim_json_conceal"] = 0
 vim.g["markdown_syntax_conceal"] = 0
 
 vim.api.nvim_exec(
-[[
+  [[
 filetype plugin indent on
 syntax enable
 set background=light
@@ -842,4 +849,5 @@ set conceallevel=0
 let g:vim_json_syntax_conceal = 0
 
 ]],
-true)
+  true
+)
