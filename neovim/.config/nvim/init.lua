@@ -202,7 +202,9 @@ require("lspconfig").tsserver.setup({
 
 require("lspconfig").clangd.setup({})
 
-vim.opt_global.shortmess:remove("F"):append("c")
+vim.opt_global.shortmess:remove("F")
+
+vim.opt_global.shortmess:append("c")
 
 local metals_config = require("metals").bare_config()
 
@@ -737,6 +739,7 @@ let g:neoformat_enabled_xml = ['tidy']
 let g:neoformat_enabled_go = []
 let g:neoformat_enabled_scala = []
 let g:neoformat_enabled_sbt = []
+let g:neoformat_enabled_sql = ['sqlformat']
 augroup fmt
   autocmd!
   au BufWritePre * try | undojoin | Neoformat | catch /^Vim\%((\a\+)\)\=:E790/ | finally | silent Neoformat | endtry
@@ -746,6 +749,8 @@ autocmd FileType yaml setlocal ts=2 sts=2 sw=2 expandtab
 autocmd FileType typescript setlocal ts=2 sts=2 sw=2 expandtab
 autocmd FileType json setlocal ts=2 sts=2 sw=2 expandtab
 autocmd FileType proto setlocal ts=2 sts=2 sw=2 expandtab
+autocmd FileType lua setlocal ts=2 sts=2 sw=2 expandtab
+autocmd FileType tpl setlocal ts=2 sts=2 sw=2 expandtab
 au BufRead,BufNewFile *.sls set filetype=yaml
 
 autocmd FileType proto nnoremap <silent> <buffer> <leader>pb  <cmd>e %:p:r.pb.go<CR>
