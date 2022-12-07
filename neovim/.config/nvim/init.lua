@@ -40,6 +40,14 @@ require("nvim-treesitter.configs").setup({
   },
 })
 
+-- lspkind
+local lspkind = require("lspkind")
+lspkind.init({
+  symbol_map = {
+    Copilot = "",
+  },
+})
+
 -- Setup nvim-cmp.
 local cmp = require("cmp")
 local types = require("cmp.types")
@@ -63,7 +71,11 @@ cmp.setup({
       "i",
       "c",
     }),
-    ["<CR>"] = cmp.mapping.confirm({ select = true }), -- Accept currently selected item. Set `select` to `false` to only confirm explicitly selected items.
+    ["<CR>"] = cmp.mapping.confirm({
+      -- this is the important line
+      behavior = cmp.ConfirmBehavior.Replace,
+      select = true,
+    }),
   },
   snippet = {
     -- REQUIRED - you must specify a snippet engine
@@ -81,6 +93,9 @@ cmp.setup({
   sources = cmp.config.sources({
     { name = "nvim_lsp" },
     { name = "vsnip" }, -- For vsnip users.
+    { name = "nvim_lsp_signature_help" },
+    { name = "emoji" },
+    { name = "copilot" },
     -- { name = 'luasnip' }, -- For luasnip users.
     -- { name = 'ultisnips' }, -- For ultisnips users.
     -- { name = 'snippy' }, -- For snippy users.
@@ -102,6 +117,19 @@ cmp.setup({
   experimental = {
     ghost_text = true,
   },
+  formatting = {
+    format = function(entry, vim_item)
+      if vim.tbl_contains({ "path" }, entry.source.name) then
+        local icon, hl_group = require("nvim-web-devicons").get_icon(entry:get_completion_item().label)
+        if icon then
+          vim_item.kind = icon
+          vim_item.kind_hl_group = hl_group
+          return vim_item
+        end
+      end
+      return require("lspkind").cmp_format({ with_text = false })(entry, vim_item)
+    end,
+  },
 })
 
 -- Use buffer source for `/` (if you enabled `native_menu`, this won't work anymore).
@@ -121,7 +149,7 @@ cmp.setup.cmdline(":", {
 })
 
 -- Setup lspconfig.
-local capabilities = require("cmp_nvim_lsp").update_capabilities(vim.lsp.protocol.make_client_capabilities())
+local capabilities = require("cmp_nvim_lsp").default_capabilities(vim.lsp.protocol.make_client_capabilities())
 local lsp_status = require("lsp-status")
 lsp_status.register_progress()
 
@@ -215,6 +243,7 @@ metals_config.settings = {
   showInferredType = true,
   excludedPackages = { "akka.actor.typed.javadsl", "com.github.swagger.akka.javadsl" },
   serverVersion = "0.11.8-SNAPSHOT",
+  serverProperties = { "-Xmx4g" },
 }
 local function map(mode, lhs, rhs, opts)
   local options = { noremap = true }
@@ -225,24 +254,42 @@ local function map(mode, lhs, rhs, opts)
 end
 
 -- LSP mappings
-map("n", "gD", "<cmd>lua vim.lsp.buf.definition()<CR>")
-map("n", "K", "<cmd>lua vim.lsp.buf.hover()<CR>")
-map("n", "gi", "<cmd>lua vim.lsp.buf.implementation()<CR>")
-map("n", "gr", "<cmd>lua vim.lsp.buf.references()<CR>")
-map("n", "gds", "<cmd>lua vim.lsp.buf.document_symbol()<CR>")
-map("n", "gws", "<cmd>lua vim.lsp.buf.workspace_symbol()<CR>")
-map("n", "<leader>cl", [[<cmd>lua vim.lsp.codelens.run()<CR>]])
-map("n", "<leader>sh", [[<cmd>lua vim.lsp.buf.signature_help()<CR>]])
-map("n", "<leader>rn", "<cmd>lua vim.lsp.buf.rename()<CR>")
-map("n", "<leader>f", "<cmd>lua vim.lsp.buf.format{async=true}<CR>")
-map("n", "<leader>ca", "<cmd>lua vim.lsp.buf.code_action()<CR>")
-map("n", "<leader>ws", '<cmd>lua require"metals".hover_worksheet()<CR>')
-map("n", "<leader>aa", [[<cmd>lua vim.diagnostic.setqflist()<CR>]]) -- all workspace diagnostics
-map("n", "<leader>ae", [[<cmd>lua vim.diagnostic.setqflist({severity = "E"})<CR>]]) -- all workspace errors
-map("n", "<leader>aw", [[<cmd>lua vim.diagnostic.setqflist({severity = "W"})<CR>]]) -- all workspace warnings
-map("n", "<leader>d", "<cmd>lua vim.diagnostic.setloclist()<CR>") -- buffer diagnostics only
-map("n", "[c", "<cmd>lua vim.diagnostic.goto_prev { wrap = false }<CR>")
-map("n", "]c", "<cmd>lua vim.diagnostic.goto_next { wrap = false }<CR>")
+vim.keymap.set("n", "gD", require("telescope.builtin").lsp_definitions, {})
+vim.keymap.set("n", "gt", require("telescope.builtin").lsp_type_definitions, {})
+vim.keymap.set("n", "K", vim.lsp.buf.hover, {})
+vim.keymap.set("n", "gi", require("telescope.builtin").lsp_implementations, {})
+vim.keymap.set("n", "gr", require("telescope.builtin").lsp_references, {})
+vim.keymap.set("n", "gds", require("telescope.builtin").lsp_document_symbols, {})
+vim.keymap.set("n", "gws", require("telescope.builtin").lsp_workspace_symbols, {})
+vim.keymap.set("n", "<leader>cl", vim.lsp.codelens.run, {})
+vim.keymap.set("n", "<leader>sh", vim.lsp.buf.signature_help, {})
+vim.keymap.set("n", "<leader>rn", vim.lsp.buf.rename, {})
+vim.keymap.set("n", "<leader>f", function()
+  vim.lsp.buf.format({ async = true })
+end, {})
+vim.keymap.set("n", "<leader>ca", function()
+  vim.lsp.buf.code_action()
+end, {})
+vim.keymap.set("n", "<leader>ws", require("metals").hover_worksheet, {})
+vim.keymap.set("n", "<leader>aa", vim.diagnostic.setqflist, {}) -- all workspace diagnostics
+vim.keymap.set("n", "<leader>ae", function()
+  vim.diagnostic.setqflist({ severity = "E" })
+end, {}) -- all workspace errors
+vim.keymap.set("n", "<leader>aw", function()
+  vim.diagnostic.setqflist({ severity = "W" })
+end, {}) -- all workspace warnings
+vim.keymap.set("n", "<leader>d", function()
+  vim.diagnostic.setloclist()
+end, {}) -- buffer diagnostics only
+vim.keymap.set("n", "[c", function()
+  vim.diagnostic.goto_prev({ wrap = false })
+end, {})
+vim.keymap.set("n", "]c", function()
+  vim.diagnostic.goto_next({ wrap = false })
+end, {})
+vim.keymap.set("n", "<leader>sd", function()
+  vim.diagnostic.open_float(0, { scope = "line" })
+end, {})
 
 -- Example mappings for usage with nvim-dap. If you don't use that, you can
 -- skip these
@@ -287,12 +334,28 @@ dap.configurations.scala = {
 
 metals_config.on_attach = function(client, bufnr)
   require("metals").setup_dap()
+  vim.api.nvim_create_autocmd({ "BufWritePre" }, {
+    pattern = { "<buffer>" },
+    callback = function()
+      vim.lsp.buf.format(nil, 5000)
+    end,
+  })
   vim.api.nvim_create_autocmd({ "BufWritePost" }, {
     pattern = { "<buffer>" },
     callback = function()
-      -- require("metals").run_scalafix()
-      vim.lsp.buf.format(nil, 100000)
-      vim.cmd("noautocmd write")
+      -- res, err = vim.lsp.buf_request_sync(
+      --   0,
+      --   "workspace/executeCommand",
+      --   { command = "metals.scalafix-run", arguments = { vim.lsp.util.make_position_params() } },
+      --   5000
+      -- )
+      -- if err ~= nil then
+      --   vim.notify("Error running scalafix: " .. err)
+      -- end
+
+      if vim.fn.getbufinfo(vim.fn.buffer_number())[1].changed == 1 then
+        vim.cmd("write")
+      end
     end,
   })
   on_attach(client, bufnr)
@@ -304,87 +367,14 @@ vim.api.nvim_create_autocmd("FileType", {
   -- NOTE: You may or may not want java included here. You will need it if you
   -- want basic Java support but it may also conflict if you are using
   -- something like nvim-jdtls which also works on a java filetype autocmd.
-  pattern = { "scala", "sbt", "java" },
+  pattern = { "scala", "sbt" },
   callback = function()
     require("metals").initialize_or_attach(metals_config)
   end,
   group = nvim_metals_group,
 })
 
--- -- java
--- -- See `:help vim.lsp.start_client` for an overview of the supported `config` options.
--- local config = {
---   -- The command that starts the language server
---   -- See: https://github.com/eclipse/eclipse.jdt.ls#running-from-the-command-line
---   cmd = {
---
---     -- 💀
---     'java', -- or '/path/to/java11_or_newer/bin/java'
---             -- depends on if `java` is in your $PATH env variable and if it points to the right version.
---
---     '-Declipse.application=org.eclipse.jdt.ls.core.id1',
---     '-Dosgi.bundles.defaultStartLevel=4',
---     '-Declipse.product=org.eclipse.jdt.ls.core.product',
---     '-Dlog.protocol=true',
---     '-Dlog.level=ALL',
---     '-Xms1g',
---     '--add-modules=ALL-SYSTEM',
---     '--add-opens', 'java.base/java.util=ALL-UNNAMED',
---     '--add-opens', 'java.base/java.lang=ALL-UNNAMED',
---
---     -- 💀
---     '-jar', '/home/max/eclipse.jdt.ls/org.eclipse.jdt.ls.product/target/repository/plugins/org.eclipse.equinox.launcher_1.6.400.v20210924-0641.jar',
---          -- ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^                                       ^^^^^^^^^^^^^^
---          -- Must point to the                                                     Change this to
---          -- eclipse.jdt.ls installation                                           the actual version
---
---
---     -- 💀
---     '-configuration', '/home/max/eclipse.jdt.ls/org.eclipse.jdt.ls.product/target/repository/config_linux',
---                     -- ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^        ^^^^^^
---                     -- Must point to the                      Change to one of `linux`, `win` or `mac`
---                     -- eclipse.jdt.ls installation            Depending on your system.
---
---
---     -- 💀
---     -- See `data directory configuration` section in the README
---     '-data', '/home/max/.eclipse.jdt.ls/dbz'
---   },
---
---   -- 💀
---   -- This is the default if not provided, you can remove it. Or adjust as needed.
---   -- One dedicated LSP server & client will be started per unique root_dir
---   root_dir = require('jdtls.setup').find_root({'.git', 'mvnw', 'gradlew'}),
---
---   -- Here you can configure eclipse.jdt.ls specific settings
---   -- See https://github.com/eclipse/eclipse.jdt.ls/wiki/Running-the-JAVA-LS-server-from-the-command-line#initialize-request
---   -- for a list of options
---   settings = {
---     java = {
---     }
---   },
---
---   -- Language server `initializationOptions`
---   -- You need to extend the `bundles` with paths to jar files
---   -- if you want to use additional eclipse.jdt.ls plugins.
---   --
---   -- See https://github.com/mfussenegger/nvim-jdtls#java-debug-installation
---   --
---   -- If you don't plan on using the debugger or other eclipse.jdt.ls plugins you can remove this
---   init_options = {
---     bundles = {}
---   },
--- }
--- -- This starts a new client & server,
--- -- or attaches to an existing client & server depending on the `root_dir`.
--- require('jdtls').start_or_attach(config)
---
-vim.api.nvim_set_keymap("n", "<leader>xx", "<cmd>Trouble<cr>", { silent = true, noremap = true })
-vim.api.nvim_set_keymap("n", "<leader>xw", "<cmd>Trouble workspace_diagnostics<cr>", { silent = true, noremap = true })
-vim.api.nvim_set_keymap("n", "<leader>xd", "<cmd>Trouble document_diagnostics<cr>", { silent = true, noremap = true })
-vim.api.nvim_set_keymap("n", "<leader>xl", "<cmd>Trouble loclist<cr>", { silent = true, noremap = true })
-vim.api.nvim_set_keymap("n", "<leader>xq", "<cmd>Trouble quickfix<cr>", { silent = true, noremap = true })
-vim.api.nvim_set_keymap("n", "gR", "<cmd>Trouble lsp_references<cr>", { silent = true, noremap = true })
+require("lspconfig").ccls.setup({})
 
 local actions = require("telescope.actions")
 local trouble = require("trouble.providers.telescope")
@@ -589,6 +579,9 @@ gls.mid[2] = {
   MetalsStatus = {
     provider = function()
       return "  " .. (vim.g["metals_status"] or "")
+    end,
+    condition = function()
+      return require("galaxyline.provider_lsp").get_lsp_client() == "metals"
     end,
     highlight = { colors.yellow, colors.bg, "bold" },
   },
