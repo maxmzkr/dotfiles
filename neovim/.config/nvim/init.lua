@@ -242,7 +242,6 @@ metals_config.settings = {
   showImplicitConversionsAndClasses = true,
   showInferredType = true,
   excludedPackages = { "akka.actor.typed.javadsl", "com.github.swagger.akka.javadsl" },
-  serverVersion = "0.11.8-SNAPSHOT",
   serverProperties = { "-Xmx4g" },
 }
 local function map(mode, lhs, rhs, opts)
