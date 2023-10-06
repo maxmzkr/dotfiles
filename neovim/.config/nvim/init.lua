@@ -243,6 +243,7 @@ metals_config.settings = {
   showInferredType = true,
   excludedPackages = { "akka.actor.typed.javadsl", "com.github.swagger.akka.javadsl" },
   serverProperties = { "-Xmx4g" },
+  testUserInterface = "Test Explorer",
 }
 local function map(mode, lhs, rhs, opts)
   local options = { noremap = true }
@@ -292,13 +293,47 @@ end, {})
 
 -- Example mappings for usage with nvim-dap. If you don't use that, you can
 -- skip these
-map("n", "<leader>dc", [[<cmd>lua require"dap".continue()<CR>]])
-map("n", "<leader>dr", [[<cmd>lua require"dap".repl.toggle()<CR>]])
-map("n", "<leader>dK", [[<cmd>lua require"dap.ui.widgets".hover()<CR>]])
-map("n", "<leader>dt", [[<cmd>lua require"dap".toggle_breakpoint()<CR>]])
-map("n", "<leader>dso", [[<cmd>lua require"dap".step_over()<CR>]])
-map("n", "<leader>dsi", [[<cmd>lua require"dap".step_into()<CR>]])
-map("n", "<leader>dl", [[<cmd>lua require"dap".run_last()<CR>]])
+vim.keymap.set("n", "<F5>", function()
+  require("dap").continue()
+end)
+vim.keymap.set("n", "<F10>", function()
+  require("dap").step_over()
+end)
+vim.keymap.set("n", "<F11>", function()
+  require("dap").step_into()
+end)
+vim.keymap.set("n", "<F12>", function()
+  require("dap").step_out()
+end)
+vim.keymap.set("n", "<Leader>b", function()
+  require("dap").toggle_breakpoint()
+end)
+vim.keymap.set("n", "<Leader>B", function()
+  require("dap").set_breakpoint()
+end)
+vim.keymap.set("n", "<Leader>lp", function()
+  require("dap").set_breakpoint(nil, nil, vim.fn.input("Log point message: "))
+end)
+vim.keymap.set("n", "<Leader>dr", function()
+  require("dap").repl.open()
+end)
+vim.keymap.set("n", "<Leader>dl", function()
+  require("dap").run_last()
+end)
+vim.keymap.set({ "n", "v" }, "<Leader>dh", function()
+  require("dap.ui.widgets").hover()
+end)
+vim.keymap.set({ "n", "v" }, "<Leader>dp", function()
+  require("dap.ui.widgets").preview()
+end)
+vim.keymap.set("n", "<Leader>df", function()
+  local widgets = require("dap.ui.widgets")
+  widgets.centered_float(widgets.frames)
+end)
+vim.keymap.set("n", "<Leader>ds", function()
+  local widgets = require("dap.ui.widgets")
+  widgets.centered_float(widgets.scopes)
+end)
 
 -- *READ THIS*
 -- I *highly* recommend setting statusBarProvider to true, however if you do,
@@ -397,24 +432,62 @@ require("gitsigns").setup({
     topdelete = { hl = "GitGutterDeleteChange", text = "▔" },
     changedelete = { hl = "GitGutterChange", text = "▎" },
   },
-  keymaps = {
-    -- Default keymap options
-    noremap = true,
-    buffer = true,
+  on_attach = function(bufnr)
+    local gs = package.loaded.gitsigns
 
-    ["n ]g"] = { expr = true, "&diff ? ']g' : '<cmd>lua require\"gitsigns\".next_hunk()<CR>'" },
-    ["n [g"] = { expr = true, "&diff ? '[g' : '<cmd>lua require\"gitsigns\".prev_hunk()<CR>'" },
+    local function map(mode, l, r, opts)
+      opts = opts or {}
+      opts.buffer = bufnr
+      vim.keymap.set(mode, l, r, opts)
+    end
 
-    ["n <leader>hs"] = '<cmd>lua require"gitsigns".stage_hunk()<CR>',
-    ["n <leader>hu"] = '<cmd>lua require"gitsigns".undo_stage_hunk()<CR>',
-    ["n <leader>hr"] = '<cmd>lua require"gitsigns".reset_hunk()<CR>',
-    ["n <leader>hp"] = '<cmd>lua require"gitsigns".preview_hunk()<CR>',
-    ["n <leader>hb"] = '<cmd>lua require"gitsigns".blame_line()<CR>',
+    -- Navigation
+    map("n", "]c", function()
+      if vim.wo.diff then
+        return "]c"
+      end
+      vim.schedule(function()
+        gs.next_hunk()
+      end)
+      return "<Ignore>"
+    end, { expr = true })
 
-    -- Text objects
-    ["o ih"] = ':<C-U>lua require"gitsigns".text_object()<CR>',
-    ["x ih"] = ':<C-U>lua require"gitsigns".text_object()<CR>',
-  },
+    map("n", "[c", function()
+      if vim.wo.diff then
+        return "[c"
+      end
+      vim.schedule(function()
+        gs.prev_hunk()
+      end)
+      return "<Ignore>"
+    end, { expr = true })
+
+    -- Actions
+    map("n", "<leader>hs", gs.stage_hunk)
+    map("n", "<leader>hr", gs.reset_hunk)
+    map("v", "<leader>hs", function()
+      gs.stage_hunk({ vim.fn.line("."), vim.fn.line("v") })
+    end)
+    map("v", "<leader>hr", function()
+      gs.reset_hunk({ vim.fn.line("."), vim.fn.line("v") })
+    end)
+    map("n", "<leader>hS", gs.stage_buffer)
+    map("n", "<leader>hu", gs.undo_stage_hunk)
+    map("n", "<leader>hR", gs.reset_buffer)
+    map("n", "<leader>hp", gs.preview_hunk)
+    map("n", "<leader>hb", function()
+      gs.blame_line({ full = true })
+    end)
+    map("n", "<leader>tb", gs.toggle_current_line_blame)
+    map("n", "<leader>hd", gs.diffthis)
+    map("n", "<leader>hD", function()
+      gs.diffthis("~")
+    end)
+    map("n", "<leader>td", gs.toggle_deleted)
+
+    -- Text object
+    map({ "o", "x" }, "ih", ":<C-U>Gitsigns select_hunk<CR>")
+  end,
 })
 
 local gl = require("galaxyline")
@@ -726,12 +799,11 @@ set completeopt=menuone,noinsert,noselect
 set shortmess+=c
 
 let g:neoformat_enabled_python = ['black']
-let g:neoformat_enabled_sql = ['pg_format']
 let g:neoformat_enabled_xml = ['tidy']
 let g:neoformat_enabled_go = []
 let g:neoformat_enabled_scala = []
 let g:neoformat_enabled_sbt = []
-let g:neoformat_enabled_sql = ['sqlformat']
+let g:neoformat_enabled_sql = ['sqlfmt']
 augroup fmt
   autocmd!
   au BufWritePre * try | undojoin | Neoformat | catch /^Vim\%((\a\+)\)\=:E790/ | finally | silent Neoformat | endtry

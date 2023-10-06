@@ -1,6 +1,7 @@
 [user]
 	name = Max Mizikar
 	email = maxmzkr@gmail.com
+	signingkey = 2F1871A7C9398611
 
 [push]
 	default = simple
@@ -40,6 +41,7 @@
               do git stash show -p $i | grep -H --label=\"$i\" \"$@\" ; done ; }; f"
 
 [commit]
+	gpgsign = true
 
 [gpg]
 	program = /usr/bin/gpg
