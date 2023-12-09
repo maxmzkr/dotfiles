@@ -19,13 +19,6 @@ return require("packer").startup(function(use)
   use("hrsh7th/cmp-vsnip")
   use("hrsh7th/cmp-nvim-lsp-signature-help")
   use("hrsh7th/cmp-emoji")
-  use({
-    "zbirenbaum/copilot-cmp",
-    after = { "copilot.lua" },
-    config = function()
-      require("copilot_cmp").setup()
-    end,
-  })
   use("hrsh7th/vim-vsnip")
   use("hrsh7th/vim-vsnip-integ")
   use("golang/vscode-go")
@@ -80,6 +73,7 @@ return require("packer").startup(function(use)
       end, 100)
     end,
   })
+  use("github/copilot.vim")
 
   use({
     "kylechui/nvim-surround",
@@ -93,9 +87,12 @@ return require("packer").startup(function(use)
 
   use("chrisbra/csv.vim")
 
+  use("stevearc/profile.nvim")
+
   -- Automatically set up your configuration after cloning packer.nvim
   -- Put this at the end after all plugins
   if packer_bootstrap then
     require("packer").sync()
   end
+
 end)

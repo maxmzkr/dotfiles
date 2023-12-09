@@ -58,6 +58,8 @@ else
 	prompt adam1
 fi
 
+bindkey -v
+
 autoload -U +X compinit && compinit
 # compinit optimization for oh-my-zsh
 # On slow systems, checking the cached .zcompdump file to see if it must be
@@ -80,8 +82,6 @@ autoload -U +X bashcompinit && bashcompinit
 autoload -Uz url-quote-magic
 
 [ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
-# Use emacs keybindings even if our EDITOR is set to vi
-bindkey -e
 
 zstyle ':completion:*' auto-description 'specify: %d'
 zstyle ':completion:*' completer _expand _complete _correct _approximate
@@ -262,3 +262,5 @@ alias gmt='git mergetool --no-promt'
 # alias docker=podman
 
 complete -o nospace -C /home/max/tfenv/versions/1.0.1/terraform terraform
+
+export USE_GKE_GCLOUD_AUTH_PLUGIN=True
