@@ -282,7 +282,7 @@ end
 -- LSP mappings
 vim.keymap.set("n", "gD", require("telescope.builtin").lsp_definitions, {})
 vim.keymap.set("n", "gt", require("telescope.builtin").lsp_type_definitions, {})
-vim.keymap.set("n", "K", vim.lsp.buf.hover, {})
+-- vim.keymap.set("n", "K", vim.lsp.buf.hover, {})
 vim.keymap.set("n", "gi", require("telescope.builtin").lsp_implementations, {})
 vim.keymap.set("n", "gr", require("telescope.builtin").lsp_references, {})
 vim.keymap.set("n", "gds", require("telescope.builtin").lsp_document_symbols, {})

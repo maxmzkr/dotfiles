@@ -64,15 +64,15 @@ return require("packer").startup(function(use)
   use("Yggdroot/indentLine")
 
   use("onsails/lspkind.nvim")
-  use({
-    "zbirenbaum/copilot.lua",
-    event = "VimEnter",
-    config = function()
-      vim.defer_fn(function()
-        require("copilot").setup()
-      end, 100)
-    end,
-  })
+  -- use({
+  --   "zbirenbaum/copilot.lua",
+  --   event = "VimEnter",
+  --   config = function()
+  --     vim.defer_fn(function()
+  --       require("copilot").setup()
+  --     end, 100)
+  --   end,
+  -- })
   use("github/copilot.vim")
 
   use({
@@ -94,5 +94,4 @@ return require("packer").startup(function(use)
   if packer_bootstrap then
     require("packer").sync()
   end
-
 end)
