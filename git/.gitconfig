@@ -1,7 +1,7 @@
 [user]
 	name = Max Mizikar
 	email = maxmzkr@gmail.com
-	signingkey = 2F1871A7C9398611
+	signingkey = 3FCE6DCBC8EAAF40A60C465E112BEAAD26B7B81D
 
 [push]
 	default = simple
