@@ -254,6 +254,15 @@ require("lspconfig").tsserver.setup({
   capabilities = lsp_status.capabilities,
 })
 
+-- null-ls
+local null_ls = require("null-ls")
+
+null_ls.setup({
+    sources = {
+        null_ls.builtins.formatting.prettier,
+    },
+})
+
 require("lspconfig").clangd.setup({})
 
 vim.opt_global.shortmess:remove("F")
@@ -284,14 +293,22 @@ vim.keymap.set("n", "gD", require("telescope.builtin").lsp_definitions, {})
 vim.keymap.set("n", "gt", require("telescope.builtin").lsp_type_definitions, {})
 -- vim.keymap.set("n", "K", vim.lsp.buf.hover, {})
 vim.keymap.set("n", "gi", require("telescope.builtin").lsp_implementations, {})
-vim.keymap.set("n", "gr", require("telescope.builtin").lsp_references, {})
+vim.keymap.set("n", "gr", function() require("telescope.builtin").lsp_references{show_line=false} end, {})
 vim.keymap.set("n", "gds", require("telescope.builtin").lsp_document_symbols, {})
 vim.keymap.set("n", "gws", require("telescope.builtin").lsp_workspace_symbols, {})
 vim.keymap.set("n", "<leader>cl", vim.lsp.codelens.run, {})
 vim.keymap.set("n", "<leader>sh", vim.lsp.buf.signature_help, {})
 vim.keymap.set("n", "<leader>rn", vim.lsp.buf.rename, {})
 vim.keymap.set("n", "<leader>f", function()
-  vim.lsp.buf.format({ async = true })
+  vim.lsp.buf.format({
+    filter = function(client)
+      if client.name == "tsserver" then
+        return false
+      end
+      return true
+    end,
+    async = True,
+  })
 end, {})
 vim.keymap.set("n", "<leader>ca", function()
   vim.lsp.buf.code_action()
@@ -447,6 +464,7 @@ telescope.setup({
       i = { ["<c-t>"] = trouble.open_with_trouble },
       n = { ["<c-t>"] = trouble.open_with_trouble },
     },
+    path_display={"smart"},
   },
 })
 
@@ -786,6 +804,8 @@ gls.short_line_right[1] = {
 vim.g["indentLine_char_list"] = { "" }
 vim.g["vim_json_conceal"] = 0
 vim.g["markdown_syntax_conceal"] = 0
+
+vim.api.nvim_create_user_command("W", "exe 'w !SUDO_ASKPASS=/etc/alternatives/ssh-askpass sudo tee >/dev/null %:p:S' | setl nomod", {})
 
 vim.api.nvim_exec(
   [[

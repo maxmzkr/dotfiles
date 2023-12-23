@@ -1,13 +1,25 @@
 -- This file can be loaded by calling `lua require('plugins')` from your init.vim
 
-local fn = vim.fn
-local install_path = fn.stdpath("data") .. "/site/pack/packer/start/packer.nvim"
-if fn.empty(fn.glob(install_path)) > 0 then
-  packer_bootstrap =
-    fn.system({ "git", "clone", "--depth", "1", "https://github.com/wbthomason/packer.nvim", install_path })
+local ensure_packer = function()
+  local fn = vim.fn
+  local install_path = fn.stdpath('data')..'/site/pack/packer/start/packer.nvim'
+  if fn.empty(fn.glob(install_path)) > 0 then
+    fn.system({'git', 'clone', '--depth', '1', 'https://github.com/wbthomason/packer.nvim', install_path})
+    vim.cmd [[packadd packer.nvim]]
+    return true
+  end
+  return false
 end
 
-return require("packer").startup(function(use)
+local packer_bootstrap = ensure_packer()
+
+local packer = require("packer")
+
+-- packer.init{
+--   max_jobs=5,
+-- }
+
+return packer.startup(function(use)
   -- My plugins here
   -- use 'foo1/bar1.nvim'
   -- use 'foo2/bar2.nvim'
@@ -88,6 +100,7 @@ return require("packer").startup(function(use)
   use("chrisbra/csv.vim")
 
   use("stevearc/profile.nvim")
+  use("jose-elias-alvarez/null-ls.nvim")
 
   -- Automatically set up your configuration after cloning packer.nvim
   -- Put this at the end after all plugins
