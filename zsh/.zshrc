@@ -60,6 +60,9 @@ fi
 
 bindkey -v
 
+source /home/max/.gvm/scripts/gvm
+fpath=($fpath $GOPATH/pkg/mod/github.com/go-task/task/v3@v3.27.1/completion/zsh)
+
 autoload -U +X compinit && compinit
 # compinit optimization for oh-my-zsh
 # On slow systems, checking the cached .zcompdump file to see if it must be
@@ -119,7 +122,6 @@ export GPG_TTY="${TTY}"
 #   export SSH_AUTH_SOCK
 # fi
 
-source /home/max/.gvm/scripts/gvm
 export PATH=/usr/local/go/bin:$PATH
 export PATH=/home/max/.local/bin:$PATH
 export PATH=/home/max/.bin:$PATH
