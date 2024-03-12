@@ -259,6 +259,7 @@ alias kw='kubectl wait'
 # git aliases
 alias gcr='current_branch'
 alias gmt='git mergetool --no-promt'
+alias gcpt='git commit -p'
 
 # docker
 # alias docker=podman
@@ -266,3 +267,5 @@ alias gmt='git mergetool --no-promt'
 complete -o nospace -C /home/max/tfenv/versions/1.0.1/terraform terraform
 
 export USE_GKE_GCLOUD_AUTH_PLUGIN=True
+
+eval "$(pyenv virtualenv-init -)"
