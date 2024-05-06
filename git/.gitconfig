@@ -74,3 +74,8 @@
 	path = /home/max/.gitconfigs/.workconfig
 [init]
 	defaultBranch = main
+
+[url "ssh://git@github.com/"]
+	insteadOf = https://github.com/
+[rebase]
+	instructionFormat = (%an <%ae>) %s
