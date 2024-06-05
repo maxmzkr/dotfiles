@@ -28,35 +28,24 @@ setopt HIST_BEEP                 # Beep when accessing nonexistent history.
 ZSH_TMUX_AUTOSTART=true;
 ZSH_TMUX_AUTOCONNECT=true;
 
-if which antibody > /dev/null; then
-	plugin_txt=${HOME}/.zsh_plugins.txt
-	plugin_sh=${HOME}/.zsh_plugins.sh
+source ~/.antidote/antidote.zsh
+# Set the root name of the plugins files (.txt and .zsh) antidote will use.
+zsh_plugins=${ZDOTDIR:-~}/.zsh_plugins
 
-	function antibody_reload() {
-		antibody bundle < $plugin_txt > $plugin_sh
-	}
+# Ensure the .zsh_plugins.txt file exists so you can add plugins.
+[[ -f ${zsh_plugins}.txt ]] || touch ${zsh_plugins}.txt
 
-	reload=false
-	if [[ ! -f ${plugin_sh} ]]; then
-		reload=true
-	else
-		txt_time=$(stat --format='%Y' "$(realpath "$plugin_txt")")
-		sh_time=$(stat --format='%Y' "$(realpath "$plugin_sh")")
-		if (( txt_time > sh_time )); then
-			reload=true
-		fi
-	fi
-	if $reload; then
-		antibody_reload
-	fi
-	source $plugin_sh
-else
-	# Set up the prompt
-	
-	autoload -Uz promptinit
-	promptinit
-	prompt adam1
+# Lazy-load antidote from its functions directory.
+fpath=(~/.antidote/functions $fpath)
+autoload -Uz antidote
+
+# Generate a new static file whenever .zsh_plugins.txt is updated.
+if [[ ! ${zsh_plugins}.zsh -nt ${zsh_plugins}.txt ]]; then
+  antidote bundle <${zsh_plugins}.txt >|${zsh_plugins}.zsh
 fi
+
+# Source your static plugins file.
+source ${zsh_plugins}.zsh
 
 bindkey -v
 
@@ -105,7 +94,7 @@ zstyle ':completion:*:kill:*' command 'ps -u $USER -o pid,%cpu,tty,cputime,cmd'
 # set list-colors to enable filename colorizing
 # preview directory's content with exa when completing cd
 # disable sort when completing `git checkout`
-zstyle ':completion:*:git-checkout:*' sort false
+# zstyle ':completion:*:git-checkout:*' sort false
 # set descriptions format to enable group support
 zstyle ':completion:*:descriptions' format '[%d]'
 # set list-colors to enable filename colorizing

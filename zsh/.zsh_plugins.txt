@@ -6,6 +6,7 @@ ohmyzsh/ohmyzsh path:cache/completions kind:fpath
 # git-escape-magic does an autoload, so it needs to add to the fpath first.
 ohmyzsh/ohmyzsh path:plugins/git-escape-magic kind:fpath
 
+go-task/task path:completion/zsh kind:fpath
 ohmyzsh/ohmyzsh path:plugins/common-aliases
 ohmyzsh/ohmyzsh path:plugins/cp
 ohmyzsh/ohmyzsh path:plugins/dnf
@@ -21,14 +22,14 @@ ohmyzsh/ohmyzsh path:plugins/golang
 ohmyzsh/ohmyzsh path:plugins/helm
 ohmyzsh/ohmyzsh path:plugins/kubectl
 ohmyzsh/ohmyzsh path:plugins/mvn
-ohmyzsh/ohmyzsh path:plugins/pep8
+ohmyzsh/ohmyzsh path:plugins/pep8 kind:fpath
 ohmyzsh/ohmyzsh path:plugins/pip
 ohmyzsh/ohmyzsh path:plugins/pyenv
 ohmyzsh/ohmyzsh path:plugins/pylint
 ohmyzsh/ohmyzsh path:plugins/python
-ohmyzsh/ohmyzsh path:plugins/ripgrep
+ohmyzsh/ohmyzsh path:plugins/ripgrep kind:fpath
 ohmyzsh/ohmyzsh path:plugins/rsync
-ohmyzsh/ohmyzsh path:plugins/salt
+ohmyzsh/ohmyzsh path:plugins/salt kind:fpath
 ohmyzsh/ohmyzsh path:plugins/systemadmin
 ohmyzsh/ohmyzsh path:plugins/systemd
 ohmyzsh/ohmyzsh path:plugins/terraform

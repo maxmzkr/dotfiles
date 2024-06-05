@@ -1,5 +1,5 @@
 return {
-  { "ericbn/vim-solarized" },
+  { "maxmx03/solarized.nvim" },
   {
     "LazyVim/LazyVim",
     opts = {
