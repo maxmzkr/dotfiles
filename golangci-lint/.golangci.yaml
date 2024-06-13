@@ -1,3 +1,6 @@
+issues:
+  max-issues-per-linter: 10000
+  max-same-issues: 1000
 linters-settings:
   errcheck:
     # Report about not checking of errors in type assertions: `a := b.(MyStruct)`.
