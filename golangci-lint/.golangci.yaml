@@ -1,6 +1,8 @@
 issues:
   max-issues-per-linter: 10000
   max-same-issues: 1000
+linters:
+  enable: []
 linters-settings:
   errcheck:
     # Report about not checking of errors in type assertions: `a := b.(MyStruct)`.
@@ -21,3 +23,35 @@ linters-settings:
       - io/ioutil.ReadFile
       - io.Copy(*bytes.Buffer)
       - io.Copy(os.Stdout)
+  exhaustive:
+    # Program elements to check for exhaustiveness.
+    # Default: [ switch ]
+    check:
+      - switch
+    # Check switch statements in generated files also.
+    # Default: false
+    check-generated: false
+    # Presence of "default" case in switch statements satisfies exhaustiveness,
+    # even if all enum members are not listed.
+    # Default: false
+    default-signifies-exhaustive: true
+    # Enum members matching the supplied regex do not have to be listed in
+    # switch statements to satisfy exhaustiveness.
+    # Default: ""
+    ignore-enum-members: ""
+    # Enum types matching the supplied regex do not have to be listed in
+    # switch statements to satisfy exhaustiveness.
+    # Default: ""
+    ignore-enum-types: ""
+    # Consider enums only in package scopes, not in inner scopes.
+    # Default: false
+    package-scope-only: false
+    # Only run exhaustive check on switches with "//exhaustive:enforce" comment.
+    # Default: false
+    explicit-exhaustive-switch: false
+    # Only run exhaustive check on map literals with "//exhaustive:enforce" comment.
+    # Default: false
+    explicit-exhaustive-map: false
+    # Switch statement requires default case even if exhaustive.
+    # Default: false
+    default-case-required: false
