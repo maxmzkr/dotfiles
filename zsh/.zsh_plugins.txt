@@ -1,18 +1,37 @@
-ohmyzsh/ohmyzsh
+# Enable Powerlevel10k instant prompt. Should stay close to the top of ~/.zshrc.  Initialization code that may require console input (password prompts, [y/n]
+# confirmations, etc.) must go above this block; everything else may go below.
+romkatv/powerlevel10k kind:fpath
 
-# ohmyzsh assumes that things in completions are auto loaded
-ohmyzsh/ohmyzsh path:cache/completions kind:fpath
+# To install with antidote, add the following to the top of antidote's ${ZDOTDIR:-$HOME}/.zsh_plugins.txt file:
+mattmc3/ez-compinit
+
+# install the deps for omz
+getantidote/use-omz
+
+# I think this is calling compinit. I'm not sure this is needed with antidote and maybe was only needed with what came before antidote
+# ohmyzsh/ohmyzsh
+
+# I'm not sure where I got this from. I am commenting it out as I debug what is calling compinit
+# It doesn't seem to call compinit, but it also doesn't seem to break any completions
+# # ohmyzsh assumes that things in completions are auto loaded
+# ohmyzsh/ohmyzsh path:cache/completions kind:fpath
+
+# Let's go ahead and use all of Oh My Zsh's lib directory.
+ohmyzsh/ohmyzsh path:lib
 
 # git-escape-magic does an autoload, so it needs to add to the fpath first.
 ohmyzsh/ohmyzsh path:plugins/git-escape-magic kind:fpath
 
 go-task/task path:completion/zsh kind:fpath
+mattmc3/zshrc.d
 ohmyzsh/ohmyzsh path:plugins/common-aliases
 ohmyzsh/ohmyzsh path:plugins/cp
 ohmyzsh/ohmyzsh path:plugins/dnf
 ohmyzsh/ohmyzsh path:plugins/docker
 ohmyzsh/ohmyzsh path:plugins/docker-compose
+ohmyzsh/ohmyzsh path:plugins/fzf
 ohmyzsh/ohmyzsh path:plugins/gcloud
+ohmyzsh/ohmyzsh path:plugins/gh
 ohmyzsh/ohmyzsh path:plugins/git
 ohmyzsh/ohmyzsh path:plugins/git-auto-fetch
 ohmyzsh/ohmyzsh path:plugins/git-escape-magic
@@ -21,7 +40,9 @@ ohmyzsh/ohmyzsh path:plugins/gitfast
 ohmyzsh/ohmyzsh path:plugins/golang
 ohmyzsh/ohmyzsh path:plugins/helm
 ohmyzsh/ohmyzsh path:plugins/kubectl
+ohmyzsh/ohmyzsh path:plugins/minikube
 ohmyzsh/ohmyzsh path:plugins/mvn
+ohmyzsh/ohmyzsh path:plugins/nvm
 ohmyzsh/ohmyzsh path:plugins/pep8 kind:fpath
 ohmyzsh/ohmyzsh path:plugins/pip
 ohmyzsh/ohmyzsh path:plugins/pyenv
@@ -36,17 +57,15 @@ ohmyzsh/ohmyzsh path:plugins/terraform
 ohmyzsh/ohmyzsh path:plugins/tmux
 ohmyzsh/ohmyzsh path:plugins/ubuntu
 ohmyzsh/ohmyzsh path:plugins/virtualenv
-romkatv/powerlevel10k
 zdharma-continuum/zsh-diff-so-fancy 
 zsh-users/zsh-autosuggestions
 zsh-users/zsh-completions
 zsh-users/zsh-syntax-highlighting
 
+# Prompt
+romkatv/powerlevel10k
+${HOME}/.p10k.zsh
+
 # Must be at end of file
+# So if you find your fzf-tab doesn't work properly, please make sure it is the last plugin to bind "^I" (If you don't know what I mean, just put it to the end of your plugin list).
 Aloxaf/fzf-tab
-
-# But this has to be after fzf-tab...
-ohmyzsh/ohmyzsh path:plugins/minikube
-
-# and fzf itself also has to be after fzf-tab
-ohmyzsh/ohmyzsh path:plugins/fzf
