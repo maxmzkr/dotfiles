@@ -135,8 +135,7 @@ source ${zsh_plugins}.zsh
 bindkey -v
 
 # source /home/max/.gvm/scripts/gvm
-fpath=($fpath $GOPATH/pkg/mod/github.com/go-task/task/v3@v3.27.1/completion/zsh)
-
+eval $(task --completion zsh)
 
 export GPG_TTY="${TTY}"
 
