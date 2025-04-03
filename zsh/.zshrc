@@ -276,15 +276,20 @@ export INFOPATH="/home/linuxbrew/.linuxbrew/share/info:${INFOPATH:-}";
 # It was also really slow, so I'm now attempting to make it lazy load
 # [[ -s "/home/max/.gvm/scripts/gvm" ]] && source "/home/max/.gvm/scripts/gvm"
 # eval "$(goenv init -)"
-export PATH="$GOROOT/bin:$PATH"
-export PATH="$PATH:$GOPATH/bin"
+if [ ! -z ${GOROOT+x} ]; then
+  export PATH="$GOROOT/bin:$PATH"
+  export PATH="$PATH:$GOPATH/bin"
+fi
 
 eval $(dircolors /home/max/.dir_colors/dircolors)
 
 alias vim='nvim'
 export KUBE_EDITOR=nvim
 
-export PATH="$HOME/.jenv/bin:$PATH"
-eval "$(jenv init -)"
+if command -v jenv &> /dev/null
+then
+  export PATH="$HOME/.jenv/bin:$PATH"
+  eval "$(jenv init -)"
+fi
 
 # zprof
