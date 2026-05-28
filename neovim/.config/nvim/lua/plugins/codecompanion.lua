@@ -88,7 +88,7 @@ return {
 			},
 			interactions = {
 				chat = {
-					adapter = "anthropic",
+					adapter = "claude_code",
 					roles = { user = "me", llm = "claude" },
 					variables = {},
 					tools = {
@@ -111,7 +111,7 @@ return {
 					},
 				},
 				inline = {
-					adapter = "anthropic",
+					adapter = "claude_code",
 				},
 				cli = {
 					agent = "claude_code",

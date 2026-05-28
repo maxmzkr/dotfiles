@@ -31,7 +31,8 @@ setopt HIST_VERIFY               # Don't execute immediately upon history expans
 setopt HIST_BEEP                 # Beep when accessing nonexistent history.
 
 ZSH_TMUX_AUTOSTART=true;
-ZSH_TMUX_AUTOCONNECT=true;
+# Because we are now using zed, we want to be able to easily create new sessions for each thread.
+ZSH_TMUX_AUTOCONNECT=false;
 
 #### nvm
 # lazy load nvm
@@ -98,6 +99,8 @@ zstyle ':fzf-tab:*' fzf-flags --color=fg:1,fg+:2
 zstyle ':fzf-tab:*' use-fzf-default-opts yes
 # switch group using `<` and `>`
 zstyle ':fzf-tab:*' switch-group '<' '>'
+# tell fzf tab we're light theme
+zstyle ':fzf-tab:*' fzf-flags --color=light
 # If you're using tmux >= 3.2, we provide a script ftb-tmux-popup to make full use of it's "popup" feature.
 # really didn't like this
 # zstyle ':fzf-tab:*' fzf-command ftb-tmux-popup
@@ -125,7 +128,6 @@ source ${zsh_plugins}.zsh
 
 bindkey -v
 
-export PATH="/home/max/go/bin:$PATH"
 eval $(task --completion zsh)
 
 export GPG_TTY="${TTY}"
@@ -278,3 +280,5 @@ export GONOSUMDB="github.com/censys/*"
 export PATH="/snap/tenv/292:$PATH"
 
 # zprof
+
+[[ -s "/home/max/.gvm/scripts/gvm" ]] && source "/home/max/.gvm/scripts/gvm"

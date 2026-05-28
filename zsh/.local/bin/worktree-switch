@@ -1,0 +1,110 @@
+#!/usr/bin/env bash
+
+# worktree-switch - Switch to an existing worktree in tmux
+# Usage: worktree-switch <branch-name>
+
+set -e
+
+# Colors for output
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+NC='\033[0m' # No Color
+
+# Function to print colored messages
+error() {
+    echo -e "${RED}Error: $1${NC}" >&2
+    exit 1
+}
+
+info() {
+    echo -e "${GREEN}$1${NC}"
+}
+
+warn() {
+    echo -e "${YELLOW}$1${NC}"
+}
+
+# Function to list all worktrees from git
+list_worktrees() {
+    if ! git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+        error "Not in a git repository. Please run this command from within a git repo."
+    fi
+    
+    echo "Available worktrees:"
+    git worktree list --porcelain | awk '
+        /^worktree / { path = substr($0, 10) }
+        /^branch / { 
+            branch = substr($0, 8)
+            # Remove refs/heads/ prefix
+            gsub(/^refs\/heads\//, "", branch)
+            print branch " -> " path
+        }
+    '
+}
+
+# Check if we're in a git repository
+if ! git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+    error "Not in a git repository. Please run this command from within a git repo."
+fi
+
+# If no argument, list available worktrees
+if [ $# -eq 0 ]; then
+    list_worktrees
+    echo ""
+    echo "Usage: $0 <branch-name>"
+    exit 0
+fi
+
+BRANCH_NAME="$1"
+
+# Find the worktree for this branch using git worktree list
+WORKTREE_DIR=$(git worktree list --porcelain | awk -v branch="$BRANCH_NAME" '
+    /^worktree / { path = substr($0, 10) }
+    /^branch / { 
+        current_branch = substr($0, 8)
+        gsub(/^refs\/heads\//, "", current_branch)
+        if (current_branch == branch) {
+            print path
+            exit
+        }
+    }
+')
+
+if [ -z "$WORKTREE_DIR" ]; then
+    error "No worktree found for branch: $BRANCH_NAME\n\n$(list_worktrees)\n\nCreate it with: worktree-tmux $BRANCH_NAME"
+fi
+
+# Check if worktree directory actually exists
+if [ ! -d "$WORKTREE_DIR" ]; then
+    error "Worktree directory does not exist: $WORKTREE_DIR"
+fi
+
+info "Switching to: $BRANCH_NAME"
+info "Location: $WORKTREE_DIR"
+
+# Session name (replace invalid characters for tmux)
+SESSION_NAME=$(echo "$BRANCH_NAME" | tr './:' '-')
+
+# Check if we're already in a tmux session
+if [ -n "$TMUX" ]; then
+    # Check if target session exists
+    if tmux has-session -t "$SESSION_NAME" 2>/dev/null; then
+        info "Switching to existing session: $SESSION_NAME"
+        tmux switch-client -t "$SESSION_NAME"
+    else
+        info "Creating new session: $SESSION_NAME"
+        tmux new-session -d -s "$SESSION_NAME" -c "$WORKTREE_DIR"
+        tmux switch-client -t "$SESSION_NAME"
+        tmux send-keys -t "$SESSION_NAME" "nvim" C-m
+    fi
+else
+    # Not in tmux, create new session or attach
+    if tmux has-session -t "$SESSION_NAME" 2>/dev/null; then
+        info "Attaching to existing session: $SESSION_NAME"
+        tmux attach-session -t "$SESSION_NAME"
+    else
+        info "Creating new tmux session: $SESSION_NAME"
+        tmux new-session -s "$SESSION_NAME" -c "$WORKTREE_DIR" nvim
+    fi
+fi

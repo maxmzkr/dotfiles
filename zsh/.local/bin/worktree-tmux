@@ -1,0 +1,138 @@
+#!/usr/bin/env bash
+
+# worktree-tmux - Create a git worktree in a new tmux session and open nvim
+# Usage: worktree-tmux <branch-name>
+
+set -e
+
+# Colors for output
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+NC='\033[0m' # No Color
+
+# Function to print colored messages
+error() {
+    echo -e "${RED}Error: $1${NC}" >&2
+    exit 1
+}
+
+info() {
+    echo -e "${GREEN}$1${NC}"
+}
+
+warn() {
+    echo -e "${YELLOW}$1${NC}"
+}
+
+# Check if branch name is provided
+if [ $# -eq 0 ]; then
+    error "Please provide a branch name.\nUsage: $0 <branch-name>"
+fi
+
+BRANCH_NAME="$1"
+
+# Check if we're in a git repository
+if ! git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+    error "Not in a git repository. Please run this script from within a git repo."
+fi
+
+# Get the repository name
+REPO_NAME=$(basename "$(git rev-parse --show-toplevel)")
+info "Repository: $REPO_NAME"
+
+# Get the git root directory
+GIT_ROOT=$(git rev-parse --show-toplevel)
+
+# Define the expected worktree path
+EXPECTED_WORKTREE_DIR="$HOME/worktrees/$REPO_NAME/$BRANCH_NAME"
+
+# Session name (replace invalid characters for tmux)
+SESSION_NAME=$(echo "$BRANCH_NAME" | tr './:' '-')
+
+# Check if this branch is already checked out in ANY worktree
+EXISTING_WORKTREE=$(git worktree list --porcelain | awk -v branch="$BRANCH_NAME" '
+    /^worktree / { path = substr($0, 10) }
+    /^branch / { 
+        current_branch = substr($0, 8)
+        gsub(/^refs\/heads\//, "", current_branch)
+        if (current_branch == branch) {
+            print path
+            exit
+        }
+    }
+')
+
+if [ -n "$EXISTING_WORKTREE" ]; then
+    # Worktree already exists (somewhere)
+    WORKTREE_DIR="$EXISTING_WORKTREE"
+    warn "Worktree already exists: $WORKTREE_DIR"
+    
+    # Check if tmux session exists for this branch
+    if tmux has-session -t "$SESSION_NAME" 2>/dev/null; then
+        info "Found existing session: $SESSION_NAME"
+        
+        # Check if we're already in a tmux session
+        if [ -n "$TMUX" ]; then
+            info "Switching to session: $SESSION_NAME"
+            tmux switch-client -t "$SESSION_NAME"
+        else
+            info "Attaching to session: $SESSION_NAME"
+            tmux attach-session -t "$SESSION_NAME"
+        fi
+    else
+        # No session exists, create one
+        info "Creating new session for existing worktree"
+        
+        if [ -n "$TMUX" ]; then
+            tmux new-session -d -s "$SESSION_NAME" -c "$WORKTREE_DIR"
+            tmux switch-client -t "$SESSION_NAME"
+            tmux send-keys -t "$SESSION_NAME" "nvim" C-m
+        else
+            tmux new-session -s "$SESSION_NAME" -c "$WORKTREE_DIR" nvim
+        fi
+    fi
+    exit 0
+fi
+
+# Worktree doesn't exist, create it at expected location
+WORKTREE_DIR="$EXPECTED_WORKTREE_DIR"
+
+# Check if main branch exists, otherwise try master
+if git show-ref --verify --quiet refs/heads/main; then
+    BASE_BRANCH="main"
+elif git show-ref --verify --quiet refs/heads/master; then
+    BASE_BRANCH="master"
+else
+    error "Neither 'main' nor 'master' branch found. Please specify base branch manually."
+fi
+
+info "Using base branch: $BASE_BRANCH"
+
+# Create worktree directory if it doesn't exist
+mkdir -p "$(dirname "$WORKTREE_DIR")"
+
+# Create the worktree
+info "Creating worktree at: $WORKTREE_DIR"
+if git worktree add -b "$BRANCH_NAME" "$WORKTREE_DIR" "$BASE_BRANCH"; then
+    info "✓ Worktree created successfully"
+else
+    # If branch already exists, try without -b flag
+    warn "Branch might already exist, trying to checkout existing branch..."
+    if git worktree add "$WORKTREE_DIR" "$BRANCH_NAME"; then
+        info "✓ Worktree created with existing branch"
+    else
+        error "Failed to create worktree"
+    fi
+fi
+
+# Create tmux session for new worktree
+if [ -n "$TMUX" ]; then
+    info "Creating new session: $SESSION_NAME"
+    tmux new-session -d -s "$SESSION_NAME" -c "$WORKTREE_DIR"
+    tmux switch-client -t "$SESSION_NAME"
+    tmux send-keys -t "$SESSION_NAME" "nvim" C-m
+else
+    info "Creating new tmux session: $SESSION_NAME"
+    tmux new-session -s "$SESSION_NAME" -c "$WORKTREE_DIR" nvim
+fi
