@@ -45,11 +45,6 @@ zstyle ':omz:plugins:nvm' silent-autoload yes # optionally remove the output gen
 #### /nvm
 
 
-#### goenv
-# lazy load goenv
-# zstyle ':omz:plugins:goenv' lazy yes
-#### /goenv
-
 # disabling because I've lost track of what all these do. I'll turn them back on if I start to miss any
 # zstyle ':completion:*' auto-description 'specify: %d'
 # zstyle ':completion:*' completer _expand _complete _correct _approximate
@@ -107,10 +102,6 @@ zstyle ':fzf-tab:*' switch-group '<' '>'
 # really didn't like this
 # zstyle ':fzf-tab:*' fzf-command ftb-tmux-popup
 
-# export PATH="$GOENV_ROOT/bin:$PATH"
-# export GOENV_ROOT="$HOME/.goenv"
-export PATH=$PATH:$(go env GOPATH)/bin
-
 #### antidote
 source ~/.antidote/antidote.zsh
 # Set the root name of the plugins files (.txt and .zsh) antidote will use.
@@ -134,12 +125,11 @@ source ${zsh_plugins}.zsh
 
 bindkey -v
 
-# source /home/max/.gvm/scripts/gvm
+export PATH="/home/max/go/bin:$PATH"
 eval $(task --completion zsh)
 
 export GPG_TTY="${TTY}"
 
-export PATH=/usr/local/go/bin:$PATH
 export PATH=/home/max/.bin:$PATH
 export PATH=/home/max/.local/share/coursier/bin:$PATH
 export PATH="${KREW_ROOT:-$HOME/.krew}/bin:$PATH"
@@ -270,17 +260,6 @@ export PATH="/home/linuxbrew/.linuxbrew/bin:/home/linuxbrew/.linuxbrew/sbin${PAT
 export MANPATH="/home/linuxbrew/.linuxbrew/share/man${MANPATH+:$MANPATH}:";
 export INFOPATH="/home/linuxbrew/.linuxbrew/share/info:${INFOPATH:-}";
 
-# following https://blog.askesis.pl/post/2017/04/how-to-debug-zsh-startup-time.html
-# I found that gvm was causing cd to be slow.
-# I am attempting to switch to goenv instead
-# It was also really slow, so I'm now attempting to make it lazy load
-# [[ -s "/home/max/.gvm/scripts/gvm" ]] && source "/home/max/.gvm/scripts/gvm"
-# eval "$(goenv init -)"
-if [ ! -z ${GOROOT+x} ]; then
-  export PATH="$GOROOT/bin:$PATH"
-  export PATH="$PATH:$GOPATH/bin"
-fi
-
 eval $(dircolors /home/max/.dir_colors/dircolors)
 
 alias vim='nvim'
@@ -291,5 +270,11 @@ then
   export PATH="$HOME/.jenv/bin:$PATH"
   eval "$(jenv init -)"
 fi
+
+export GOPROXY=https://athens.ops.cencorp.io
+export GONOSUMDB="github.com/censys/*"
+
+# tenv
+export PATH="/snap/tenv/292:$PATH"
 
 # zprof
