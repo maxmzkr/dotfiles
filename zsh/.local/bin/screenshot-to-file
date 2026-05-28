@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+
+# screenshot-to-file - Save screenshot to file and copy path to clipboard
+
+# Create screenshots directory if it doesn't exist
+SCREENSHOT_DIR="$HOME/Pictures/screenshots"
+mkdir -p "$SCREENSHOT_DIR"
+
+# Generate filename with timestamp
+FILENAME="screenshot-$(date +%Y%m%d-%H%M%S).png"
+FILEPATH="$SCREENSHOT_DIR/$FILENAME"
+
+# Get image from clipboard and save it
+xclip -selection clipboard -t image/png -o > "$FILEPATH"
+
+# Copy the filepath to clipboard
+echo -n "$FILEPATH" | xclip -selection clipboard
+
+# Notify
+notify-send "Screenshot saved" "$FILEPATH\n(path copied to clipboard)"
+
+# Print to stdout too
+echo "$FILEPATH"

@@ -53,6 +53,16 @@ return {
 			vim.cmd([[cab cc CodeCompanion]])
 			if secrets.api_key then vim.env.ANTHROPIC_API_KEY = secrets.api_key end
 			if secrets.url then vim.env.ANTHROPIC_BASE_URL = secrets.url end
+			vim.api.nvim_create_autocmd("VimEnter", {
+				once = true,
+				callback = function()
+					vim.schedule(function()
+						if vim.fn.exists(":CodeCompanionChat") == 2 then
+							vim.cmd("CodeCompanionChat")
+						end
+					end)
+				end,
+			})
 		end,
 		opts = {
 			adapters = {
