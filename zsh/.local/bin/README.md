@@ -1,40 +1,35 @@
 # Worktree Management Scripts
 
-Scripts to streamline git worktree workflows with tmux and nvim.
+Script to streamline git worktree workflows with tmux and nvim.
 
-## Scripts
+## Script
 
 ### `worktree-tmux` (alias: `wt`)
-Create a new git worktree and open it in a tmux session with nvim.
+Intelligently manage git worktrees and tmux sessions.
 
 **Usage:**
 ```bash
 wt feature/my-branch
 ```
 
-Creates:
-- Worktree at `~/worktrees/<repo>/<branch>` based on `main` (or `master`)
-- Tmux session named after the branch
-- Opens nvim automatically
+**Smart behavior:**
+- If worktree exists with tmux session → switch to session
+- If worktree exists without session → create session and open nvim
+- If worktree doesn't exist → create worktree + session + open nvim
 
-### `worktree-switch` (alias: `wts`)
-Switch to an existing worktree in a tmux session. Uses `git worktree list` to find worktrees in the current repository.
+**Tab completion:** Press `<TAB>` to see all existing worktree branches
 
-**Usage:**
-```bash
-wts feature/my-branch              # Switch to branch
-wts                                # List all available worktrees
-```
-
-**Note:** Must be run from within a git repository. Properly handles branch names with slashes (e.g., `feature/foo/bar`).
-
-Both commands support tab completion for easy navigation between worktrees!
+**Worktree location:** `~/worktrees/<repo>/<branch>`
 
 ## Installation
 
-The scripts are automatically added to PATH via `~/.zshrc.d/worktree.zsh` which is loaded by the `mattmc3/zshrc.d` plugin.
-
-After pulling these changes:
+Managed via stow:
 ```bash
-source ~/.zshrc
+cd ~/dotfiles
+stow -R zsh
 ```
+
+This creates symlinks:
+- `~/.local/bin/worktree-tmux` → script
+- `~/.config/zsh/completions/_worktree-tmux` → completion
+- `~/.zshrc.d/worktree.zsh` → config + alias
