@@ -17,6 +17,7 @@ Files inside a package directory keep their leading dot (`.zshrc`, `.config/`, `
 - `git/` — global git config (`~/.gitconfig`)
 - `gitwork/` — work-only git overrides, included from `~/.gitconfig`
 - `golangci-lint/` — `~/.golangci.yaml`
+- `mcphub/` — mcphub.nvim MCP server registry (`~/.config/mcphub/servers.json`)
 - `neovim/` — LazyVim-based nvim config
 - `stylua/` — stylua formatter config
 - `tmux/` — main tmux config (`~/.tmux.conf`)

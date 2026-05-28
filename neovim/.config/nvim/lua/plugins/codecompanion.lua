@@ -87,6 +87,16 @@ return {
 				},
 				acp = {
 					claude_code = function()
+						-- Block until mcphub is ready so we can pass its aggregator endpoint
+						-- to the Claude Code subprocess as a single MCP server. This way
+						-- ${cmd: ...} interpolation in servers.json is resolved by mcphub,
+						-- not the ACP child process.
+						local instance
+						local ok = vim.wait(5000, function()
+							instance = require("mcphub").get_hub_instance()
+							return instance and instance:ensure_ready()
+						end, 100)
+						if not ok then error("MCPHub instance not ready in time") end
 						return require("codecompanion.adapters").extend("claude_code", {
 							commands = {
 								default = { vim.fn.expand("~/.nvm/versions/node/v22.17.0/bin/node"), vim.fn.expand("~/.nvm/versions/node/v22.17.0/lib/node_modules/@agentclientprotocol/claude-agent-acp/dist/index.js") },
@@ -95,6 +105,19 @@ return {
 							env = {
 								ANTHROPIC_API_KEY = secrets.api_key,
 								ANTHROPIC_BASE_URL = secrets.url,
+							},
+							defaults = {
+								mcpServers = {
+									{
+										name = "mcphub",
+										type = "sse",
+										url = ("http://localhost:%d/mcp"):format(instance.port),
+										args = {},
+										command = "",
+										headers = {},
+										env = {},
+									},
+								},
 							},
 						})
 					end,
