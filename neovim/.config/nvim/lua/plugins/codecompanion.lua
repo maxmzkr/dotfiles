@@ -56,6 +56,10 @@ return {
 			vim.api.nvim_create_autocmd("VimEnter", {
 				once = true,
 				callback = function()
+					-- Only auto-open chat when nvim is launched blank — skip git commit,
+					-- piped stdin, opening a file, etc.
+					if vim.fn.argc(-1) > 0 then return end
+					if vim.api.nvim_buf_line_count(0) > 1 or vim.fn.getline(1) ~= "" then return end
 					vim.schedule(function()
 						if vim.fn.exists(":CodeCompanionChat") == 2 then
 							vim.cmd("CodeCompanionChat")
