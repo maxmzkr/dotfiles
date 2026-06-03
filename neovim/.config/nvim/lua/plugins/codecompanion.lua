@@ -48,6 +48,34 @@ return {
 			{ "<leader>ad", "<cmd>CodeCompanionCmd<cr>", desc = "Cmd-line", mode = "n" },
 			{ "<leader>al", "<cmd>CodeCompanionCLI<cr>", desc = "CLI (Claude Code)", mode = { "n", "v" } },
 			{ "ga", "<cmd>CodeCompanionChat Add<cr>", desc = "Add to Chat", mode = "v" },
+			{
+				"<leader>aB",
+				function()
+					local chat = require("codecompanion").last_chat()
+					if not chat then
+						chat = require("codecompanion").chat()
+					end
+					if not chat then return vim.notify("Could not get a chat buffer", vim.log.levels.ERROR) end
+					local cfg = require("codecompanion.config")
+					local buffer_cmd = require("codecompanion.interactions.shared.slash_commands.buffer").new({
+						Chat = chat,
+						config = cfg.interactions.chat.slash_commands["buffer"],
+					})
+					local count = 0
+					for _, buf in ipairs(require("codecompanion.utils.buffers").get_open()) do
+						if buf.bufnr ~= chat.bufnr and buf.path ~= "" and vim.fn.filereadable(buf.path) == 1 then
+							buffer_cmd:output(
+								{ bufnr = buf.bufnr, name = buf.name, path = buf.path },
+								{ silent = true }
+							)
+							count = count + 1
+						end
+					end
+					vim.notify(("Added %d buffer(s) to chat"):format(count))
+				end,
+				desc = "Add all buffers to Chat",
+				mode = "n",
+			},
 		},
 		init = function()
 			vim.cmd([[cab cc CodeCompanion]])
@@ -60,11 +88,18 @@ return {
 					-- piped stdin, opening a file, etc.
 					if vim.fn.argc(-1) > 0 then return end
 					if vim.api.nvim_buf_line_count(0) > 1 or vim.fn.getline(1) ~= "" then return end
-					vim.schedule(function()
-						if vim.fn.exists(":CodeCompanionChat") == 2 then
-							vim.cmd("CodeCompanionChat")
+					local function try_open(attempts_left)
+						if attempts_left <= 0 then return end
+						local hub = pcall(require, "mcphub") and require("mcphub").get_hub_instance()
+						if hub and hub:ensure_ready() then
+							if vim.fn.exists(":CodeCompanionChat") == 2 then
+								vim.cmd("CodeCompanionChat")
+							end
+						else
+							vim.defer_fn(function() try_open(attempts_left - 1) end, 200)
 						end
-					end)
+					end
+					vim.schedule(function() try_open(50) end) -- wait up to 10s
 				end,
 			})
 		end,
@@ -92,11 +127,23 @@ return {
 						-- ${cmd: ...} interpolation in servers.json is resolved by mcphub,
 						-- not the ACP child process.
 						local instance
-						local ok = vim.wait(5000, function()
+						local ok = vim.wait(15000, function()
 							instance = require("mcphub").get_hub_instance()
 							return instance and instance:ensure_ready()
 						end, 100)
-						if not ok then error("MCPHub instance not ready in time") end
+						local mcp_servers = {}
+						if ok and instance then
+							mcp_servers = {
+								{
+									type = "sse",
+									name = "mcphub",
+									url = ("http://localhost:%d/mcp"):format(instance.port),
+									headers = {},
+								},
+							}
+						else
+							vim.notify("MCPHub not ready; chat opened without MCP tools", vim.log.levels.WARN)
+						end
 						return require("codecompanion.adapters").extend("claude_code", {
 							commands = {
 								default = { vim.fn.expand("~/.nvm/versions/node/v22.17.0/bin/node"), vim.fn.expand("~/.nvm/versions/node/v22.17.0/lib/node_modules/@agentclientprotocol/claude-agent-acp/dist/index.js") },
@@ -107,17 +154,7 @@ return {
 								ANTHROPIC_BASE_URL = secrets.url,
 							},
 							defaults = {
-								mcpServers = {
-									{
-										name = "mcphub",
-										type = "sse",
-										url = ("http://localhost:%d/mcp"):format(instance.port),
-										args = {},
-										command = "",
-										headers = {},
-										env = {},
-									},
-								},
+								mcpServers = mcp_servers,
 							},
 						})
 					end,

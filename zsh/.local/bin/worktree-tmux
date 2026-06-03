@@ -37,12 +37,19 @@ if ! git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
     error "Not in a git repository. Please run this script from within a git repo."
 fi
 
-# Get the repository name
-REPO_NAME=$(basename "$(git rev-parse --show-toplevel)")
+# Get the main worktree path (first entry from `git worktree list`), so
+# that running this from a secondary worktree still resolves the repo name
+# correctly instead of using the current worktree's branch directory.
+MAIN_WORKTREE=$(git worktree list --porcelain | awk '/^worktree / { print substr($0, 10); exit }')
+if [ -z "$MAIN_WORKTREE" ]; then
+    error "Could not determine main worktree path."
+fi
+
+REPO_NAME=$(basename "$MAIN_WORKTREE")
 info "Repository: $REPO_NAME"
 
-# Get the git root directory
-GIT_ROOT=$(git rev-parse --show-toplevel)
+# Keep GIT_ROOT pointing at the main worktree as well
+GIT_ROOT="$MAIN_WORKTREE"
 
 # Define the expected worktree path
 EXPECTED_WORKTREE_DIR="$HOME/worktrees/$REPO_NAME/$BRANCH_NAME"
@@ -98,16 +105,42 @@ fi
 # Worktree doesn't exist, create it at expected location
 WORKTREE_DIR="$EXPECTED_WORKTREE_DIR"
 
-# Check if main branch exists, otherwise try master
-if git show-ref --verify --quiet refs/heads/main; then
-    BASE_BRANCH="main"
-elif git show-ref --verify --quiet refs/heads/master; then
-    BASE_BRANCH="master"
+# Determine the default remote (prefer origin)
+if git remote get-url origin >/dev/null 2>&1; then
+    REMOTE="origin"
 else
-    error "Neither 'main' nor 'master' branch found. Please specify base branch manually."
+    REMOTE=$(git remote | head -n1)
 fi
 
-info "Using base branch: $BASE_BRANCH"
+if [ -z "$REMOTE" ]; then
+    # No remote configured; fall back to local main/master
+    if git show-ref --verify --quiet refs/heads/main; then
+        BASE_BRANCH="main"
+    elif git show-ref --verify --quiet refs/heads/master; then
+        BASE_BRANCH="master"
+    else
+        error "Neither 'main' nor 'master' branch found and no remote configured."
+    fi
+    info "No remote found; using local base branch: $BASE_BRANCH"
+else
+    info "Fetching from $REMOTE..."
+    if ! git fetch --quiet "$REMOTE"; then
+        warn "Failed to fetch from $REMOTE; falling back to local refs"
+    fi
+
+    if git show-ref --verify --quiet "refs/remotes/$REMOTE/main"; then
+        BASE_BRANCH="$REMOTE/main"
+    elif git show-ref --verify --quiet "refs/remotes/$REMOTE/master"; then
+        BASE_BRANCH="$REMOTE/master"
+    elif git show-ref --verify --quiet refs/heads/main; then
+        BASE_BRANCH="main"
+    elif git show-ref --verify --quiet refs/heads/master; then
+        BASE_BRANCH="master"
+    else
+        error "Neither 'main' nor 'master' branch found on $REMOTE or locally."
+    fi
+    info "Using base branch: $BASE_BRANCH"
+fi
 
 # Create worktree directory if it doesn't exist
 mkdir -p "$(dirname "$WORKTREE_DIR")"

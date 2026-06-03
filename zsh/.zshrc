@@ -31,8 +31,7 @@ setopt HIST_VERIFY               # Don't execute immediately upon history expans
 setopt HIST_BEEP                 # Beep when accessing nonexistent history.
 
 ZSH_TMUX_AUTOSTART=true;
-# Because we are now using zed, we want to be able to easily create new sessions for each thread.
-ZSH_TMUX_AUTOCONNECT=false;
+ZSH_TMUX_AUTOCONNECT=true;
 
 #### nvm
 # lazy load nvm
