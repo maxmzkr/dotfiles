@@ -14,6 +14,12 @@ local function override_diff_highlights()
     -- diffview file panel additions
     DiffviewDiffAddAsDelete = { bg = "#f4d4d0" },
     DiffviewDiffDelete = { fg = "#93a1a1", bg = "NONE" },
+    -- octo review panes link DiffText to these per-window; upstream defaults are
+    -- GitHub's dark green/red, dark enough to need white fg. Stay at the same
+    -- lightness as the line backgrounds above and get the emphasis from
+    -- saturation instead, so syntax colors stay readable on top.
+    OctoReviewDiffAddText = { bg = "#d9eeae", fg = "NONE", bold = true },
+    OctoReviewDiffDeleteText = { bg = "#ffd0c2", fg = "NONE", bold = true },
   }
   for group, val in pairs(sets) do
     vim.api.nvim_set_hl(0, group, val)

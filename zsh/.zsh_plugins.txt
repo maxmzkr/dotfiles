@@ -44,7 +44,10 @@ ohmyzsh/ohmyzsh path:plugins/mvn
 ohmyzsh/ohmyzsh path:plugins/nvm
 ohmyzsh/ohmyzsh path:plugins/pep8 kind:fpath
 ohmyzsh/ohmyzsh path:plugins/pip
-ohmyzsh/ohmyzsh path:plugins/pyenv
+# pyenv plugin removed: not installed, but the omz plugin still costs ~160ms
+# at startup searching for pyenv in $HOME/.pyenv, /usr/local/pyenv, brew, etc.
+# Re-enable if pyenv gets installed.
+# ohmyzsh/ohmyzsh path:plugins/pyenv
 ohmyzsh/ohmyzsh path:plugins/pylint
 ohmyzsh/ohmyzsh path:plugins/python
 ohmyzsh/ohmyzsh path:plugins/ripgrep kind:fpath

@@ -4,9 +4,11 @@ One file per plugin override or addition. Each returns a lazy.nvim spec table (o
 
 ## Files
 
-- `codecompanion.lua` — CodeCompanion (LLM chat/inline/CLI) routed through a local Bifrost proxy. Reads `~/.config/bifrost/credentials.json` for `api_key` and `url`. Configures both HTTP (`anthropic`) and ACP (`claude_code`) adapters. Default chat adapter is `claude_code`. Adds `<leader>a*` keymaps and a `cc` command abbreviation. Whitelists `<git-root>/memories` as the `memory` tool's `/memories` mount.
+- `avante.lua` — avante.nvim. Disabled (`enabled = false`); superseded by `sidekick.lua`.
+- `codecompanion.lua` — CodeCompanion (LLM chat/inline/CLI) routed through a local Bifrost proxy. Disabled (`enabled = false`); superseded by `sidekick.lua`.
+- `sidekick.lua` — sidekick.nvim CLI integration (active AI plugin). Two Claude tool profiles: `claude` (`<leader>aa`, subscription — clears ambient `ANTHROPIC_*` vars) and `claude-bifrost` (`<leader>ab`, routes through the Bifrost proxy via `~/.config/bifrost/credentials.json`). `<leader>aa` also auto-opens on blank launch. NES disabled (no Copilot sub).
 - `colorscheme.lua` — `solarized.nvim`, light background.
-- `copilot.lua` — sets copilot model to `gpt-4o-copilot` and CopilotChat to `claude-3.7-sonnet`.
+- `copilot.lua` — copilot.lua + CopilotChat.nvim. Disabled (`enabled = false`); the `ai.copilot`/`ai.copilot-chat` LazyVim extras are also removed from `lazyvim.json`.
 - `mcphub.lua` — MCPHub plugin with `<leader>am` keymap; wires it into CodeCompanion as an extension.
 - `dap-python.lua` — `<leader>dn/df/ds` for nvim-dap-python test/debug actions.
 - `fugitive.lua` — vim-fugitive + vim-rhubarb, loaded on `BufWinEnter`.

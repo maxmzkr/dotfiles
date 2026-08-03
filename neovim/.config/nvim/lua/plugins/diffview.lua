@@ -32,8 +32,9 @@ return {
       DiffviewGlobal.emitter:on("view_opened", vim.schedule_wrap(open_chat_in_current_tab))
     end,
     keys = {
-      { "<leader>gd", "<cmd>DiffviewOpen<cr>", desc = "Diffview: working tree" },
+      { "<leader>gd", "<cmd>DiffviewOpen HEAD<cr>", desc = "Diffview: vs HEAD" },
       { "<leader>gD", "<cmd>DiffviewOpen HEAD~1<cr>", desc = "Diffview: vs HEAD~1" },
+      { "<leader>gr", "<cmd>DiffviewRefresh<cr>", desc = "Diffview: refresh" },
       { "<leader>gh", "<cmd>DiffviewFileHistory<cr>", desc = "Diffview: branch history" },
       { "<leader>gH", "<cmd>DiffviewFileHistory %<cr>", desc = "Diffview: current file history" },
       { "<leader>gx", "<cmd>DiffviewClose<cr>", desc = "Diffview: close" },

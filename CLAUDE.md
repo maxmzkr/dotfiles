@@ -17,7 +17,12 @@ Files inside a package directory keep their leading dot (`.zshrc`, `.config/`, `
 - `git/` — global git config (`~/.gitconfig`)
 - `gitwork/` — work-only git overrides, included from `~/.gitconfig`
 - `golangci-lint/` — `~/.golangci.yaml`
-- `mcphub/` — mcphub.nvim MCP server registry (`~/.config/mcphub/servers.json`)
+- `kitty/` — kitty terminal config (`~/.config/kitty/kitty.conf`)
+- `mcphub/` — mcphub.nvim MCP server registry (`~/.config/mcphub/servers.json`). No secrets or internal
+  hostnames live here: values are `${cmd: ...}` placeholders that mcp-hub resolves at launch (it resolves
+  them in `env`, `args`, `command`, `url`, `headers`, `cwd`). The `bifrost` server reads both its
+  `mcp_url` and `api_key` from the untracked `~/.config/bifrost/credentials.json`, so that file must exist
+  on a new machine — see `neovim/.config/nvim/lua/plugins/` for the nvim side of the same file.
 - `neovim/` — LazyVim-based nvim config
 - `stylua/` — stylua formatter config
 - `tmux/` — main tmux config (`~/.tmux.conf`)

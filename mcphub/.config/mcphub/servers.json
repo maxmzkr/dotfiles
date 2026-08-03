@@ -1,25 +1,31 @@
 {
   "mcpServers": {
-    "github": {
-      "url": "https://api.githubcopilot.com/mcp/",
-      "headers": {
-        "Authorization": "Bearer ${cmd: gh auth token}"
-      }
-    },
     "atlassian": {
       "url": "https://mcp.atlassian.com/v1/mcp/authv2"
     },
-    "gopls": {
-      "command": "mcp-language-server",
-      "args": ["--workspace", "${CWD}", "--lsp", "gopls"]
+    "bifrost": {
+      "disabled": false,
+      "headers": {
+        "Authorization": "Bearer ${cmd: jq -r .api_key ~/.config/bifrost/credentials.json}"
+      },
+      "url": "${cmd: jq -r .mcp_url ~/.config/bifrost/credentials.json}"
     },
-    "slack": {
-      "command": "npx",
-      "args": ["-y", "slack-mcp-server@latest", "--transport", "stdio"],
-      "env": {
-        "SLACK_MCP_XOXP_TOKEN": "${cmd: cat ${HOME}/.config/slack-mcp/xoxp_token}",
-        "SLACK_MCP_ADD_MESSAGE_TOOL": "true"
-      }
+    "github": {
+      "disabled": false,
+      "headers": {
+        "Authorization": "Bearer ${cmd: gh auth token}"
+      },
+      "url": "https://api.githubcopilot.com/mcp/"
+    },
+    "gopls": {
+      "args": [
+        "--workspace",
+        "${CWD}",
+        "--lsp",
+        "gopls"
+      ],
+      "command": "mcp-language-server",
+      "disabled": false
     }
   }
 }

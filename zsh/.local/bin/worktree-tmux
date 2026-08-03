@@ -60,7 +60,7 @@ SESSION_NAME=$(echo "$BRANCH_NAME" | tr './:' '-')
 # Check if this branch is already checked out in ANY worktree
 EXISTING_WORKTREE=$(git worktree list --porcelain | awk -v branch="$BRANCH_NAME" '
     /^worktree / { path = substr($0, 10) }
-    /^branch / { 
+    /^branch / {
         current_branch = substr($0, 8)
         gsub(/^refs\/heads\//, "", current_branch)
         if (current_branch == branch) {
@@ -69,6 +69,15 @@ EXISTING_WORKTREE=$(git worktree list --porcelain | awk -v branch="$BRANCH_NAME"
         }
     }
 ')
+
+# If no worktree has that branch checked out, also check whether the expected
+# path is already registered as a worktree (e.g. detached HEAD, or someone
+# manually checked out a different branch there). Reuse it instead of erroring.
+if [ -z "$EXISTING_WORKTREE" ]; then
+    if git worktree list --porcelain | awk '/^worktree / { print substr($0, 10) }' | grep -Fxq "$EXPECTED_WORKTREE_DIR"; then
+        EXISTING_WORKTREE="$EXPECTED_WORKTREE_DIR"
+    fi
+fi
 
 if [ -n "$EXISTING_WORKTREE" ]; then
     # Worktree already exists (somewhere)
@@ -128,7 +137,12 @@ else
         warn "Failed to fetch from $REMOTE; falling back to local refs"
     fi
 
-    if git show-ref --verify --quiet "refs/remotes/$REMOTE/main"; then
+    # If the requested branch already exists on the remote, base the new
+    # worktree on it so we resume the remote state instead of branching from main.
+    if git show-ref --verify --quiet "refs/remotes/$REMOTE/$BRANCH_NAME"; then
+        BASE_BRANCH="$REMOTE/$BRANCH_NAME"
+        info "Branch '$BRANCH_NAME' exists on $REMOTE; basing worktree on $BASE_BRANCH"
+    elif git show-ref --verify --quiet "refs/remotes/$REMOTE/main"; then
         BASE_BRANCH="$REMOTE/main"
     elif git show-ref --verify --quiet "refs/remotes/$REMOTE/master"; then
         BASE_BRANCH="$REMOTE/master"
@@ -145,13 +159,22 @@ fi
 # Create worktree directory if it doesn't exist
 mkdir -p "$(dirname "$WORKTREE_DIR")"
 
-# Create the worktree
+# Create the worktree.
+# - If the branch exists on the remote, force the local branch to point at the
+#   remote tip with -B and let `git worktree add` configure upstream tracking.
+# - Otherwise, create a fresh branch from the configured base with -b.
 info "Creating worktree at: $WORKTREE_DIR"
-if git worktree add -b "$BRANCH_NAME" "$WORKTREE_DIR" "$BASE_BRANCH"; then
+if [ -n "$REMOTE" ] && git show-ref --verify --quiet "refs/remotes/$REMOTE/$BRANCH_NAME"; then
+    if git worktree add -B "$BRANCH_NAME" "$WORKTREE_DIR" "$BASE_BRANCH"; then
+        info "✓ Worktree created tracking $BASE_BRANCH"
+    else
+        error "Failed to create worktree from $BASE_BRANCH"
+    fi
+elif git worktree add -b "$BRANCH_NAME" "$WORKTREE_DIR" "$BASE_BRANCH"; then
     info "✓ Worktree created successfully"
 else
-    # If branch already exists, try without -b flag
-    warn "Branch might already exist, trying to checkout existing branch..."
+    # If local branch already exists, try checking it out as-is
+    warn "Branch might already exist locally, trying to checkout existing branch..."
     if git worktree add "$WORKTREE_DIR" "$BRANCH_NAME"; then
         info "✓ Worktree created with existing branch"
     else

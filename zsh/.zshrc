@@ -34,9 +34,10 @@ ZSH_TMUX_AUTOSTART=true;
 ZSH_TMUX_AUTOCONNECT=true;
 
 #### nvm
-# lazy load nvm
-# Switching to lazy off. I'd like lazy if it still started autoload
-zstyle ':omz:plugins:nvm' lazy no
+# Lazy-load nvm: sourcing nvm.sh costs ~250ms at startup. lazy yes defers it
+# until the first nvm/node/npm/etc. invocation. Autoload-on-cd via .nvmrc
+# stops working in lazy mode — re-enable lazy no if you need that.
+zstyle ':omz:plugins:nvm' lazy yes
 # if I need to lazy load on commands other than node, npm, npx, pnpm, pnpx, yarn, or corepack, I can add those commands here
 zstyle ':omz:plugins:nvm' lazy-cmd eslint prettier typescript vim
 # auto change node version based on .nvmrc
@@ -127,7 +128,16 @@ source ${zsh_plugins}.zsh
 
 bindkey -v
 
-eval $(task --completion zsh)
+# Cache task completion: `eval $(task --completion zsh)` execs `task` every
+# startup (~20-30ms). Cache the output and regenerate when the task binary
+# changes.
+_task_completion_cache="${ZSH_CACHE_DIR:-$HOME/.cache/zsh}/task-completion.zsh"
+if [[ ! -s $_task_completion_cache || $commands[task] -nt $_task_completion_cache ]]; then
+  mkdir -p ${_task_completion_cache:h}
+  task --completion zsh >| $_task_completion_cache
+fi
+source $_task_completion_cache
+unset _task_completion_cache
 
 export GPG_TTY="${TTY}"
 
@@ -246,7 +256,11 @@ alias gcpt='git commit -p'
 # docker
 # alias docker=podman
 
-complete -o nospace -C /home/max/tfenv/versions/1.0.1/terraform terraform
+# `terraform` lives at /snap/bin/terraform (the old tfenv path was stale).
+# `complete -C` needs bashcompinit, which the nvm plugin already autoloads.
+if (( $+commands[terraform] )); then
+  complete -o nospace -C ${commands[terraform]} terraform
+fi
 
 export USE_GKE_GCLOUD_AUTH_PLUGIN=True
 
@@ -280,4 +294,14 @@ export PATH="/snap/tenv/292:$PATH"
 
 # zprof
 
-[[ -s "/home/max/.gvm/scripts/gvm" ]] && source "/home/max/.gvm/scripts/gvm"
+# Lazy-load gvm: sourcing /home/max/.gvm/scripts/gvm costs ~230ms (it overrides
+# `cd` and pre-loads env files). Defer until the first `gvm` call. Note: this
+# DROPS gvm's automatic GOROOT/GOPATH switching on `cd` — fine because system
+# `go` is in PATH and the cd override was the slowest part.
+if [[ -s "/home/max/.gvm/scripts/gvm" ]]; then
+  gvm() {
+    unfunction gvm
+    source "/home/max/.gvm/scripts/gvm"
+    gvm "$@"
+  }
+fi

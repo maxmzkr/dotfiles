@@ -32,6 +32,52 @@ vim.api.nvim_create_autocmd("FileType", {
 	end,
 })
 
+-- Track nvim's focus state so the CodeCompanion-done notifier can skip
+-- setting the tmux flag when we're already watching, and clear it when
+-- focus returns.
+vim.g.cc_focused = true
+vim.api.nvim_create_autocmd({ "FocusGained", "FocusLost" }, {
+	group = augroup("codecompanion_focus_track"),
+	callback = function(args)
+		vim.g.cc_focused = args.event == "FocusGained"
+		if args.event == "FocusGained" then
+			local pane = os.getenv("TMUX_PANE")
+			if pane then
+				vim.system({ "tmux", "set-option", "-u", "-t", pane, "@cc_done" }, { detach = true })
+			end
+		end
+	end,
+})
+
+-- Play a sound when CodeCompanion finishes responding, and flag the tmux
+-- session (only if nvim isn't currently focused) so other sessions can
+-- see at a glance which one finished.
+vim.api.nvim_create_autocmd("User", {
+	group = augroup("codecompanion_done_notify"),
+	pattern = { "CodeCompanionChatDone", "CodeCompanionRequestFinished" },
+	callback = function(args)
+		vim.system({ "paplay", "/usr/share/sounds/freedesktop/stereo/complete.oga" }, { detach = true })
+		if args.match == "CodeCompanionChatDone" and not vim.g.cc_focused then
+			local pane = os.getenv("TMUX_PANE")
+			if pane then
+				vim.system({ "tmux", "set-option", "-t", pane, "@cc_done", "1" }, { detach = true })
+			end
+		end
+	end,
+})
+-- Prevent LSP clients (gopls etc.) from attaching to octo:// buffers.
+-- LspAttach fires after textDocument/didOpen is already sent, which is too late —
+-- gopls rejects the non-file URI before our detach runs. Intercept at the source.
+do
+	local orig = vim.lsp.buf_attach_client
+	vim.lsp.buf_attach_client = function(bufnr, client_id)
+		if vim.api.nvim_buf_get_name(bufnr):match("^octo://") then
+			return false
+		end
+		return orig(bufnr, client_id)
+	end
+end
+
 -- In CodeCompanion chat buffers, <leader>gf opens the file under the cursor
 -- in another split (preferring the previously-active window) instead of the
 -- chat split itself.

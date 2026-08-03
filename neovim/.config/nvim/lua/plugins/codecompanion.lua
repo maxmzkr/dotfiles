@@ -1,13 +1,8 @@
-local secrets = (function()
-	local path = vim.fn.expand("~/.config/bifrost/credentials.json")
-	local ok, data = pcall(vim.fn.readfile, path)
-	if not ok then return {} end
-	return vim.fn.json_decode(table.concat(data, "\n")) or {}
-end)()
 
 return {
 	{
 		"olimorris/codecompanion.nvim",
+		enabled = false,
 		version = "^19",
 		dependencies = {
 			"nvim-lua/plenary.nvim",
@@ -55,7 +50,9 @@ return {
 					if not chat then
 						chat = require("codecompanion").chat()
 					end
-					if not chat then return vim.notify("Could not get a chat buffer", vim.log.levels.ERROR) end
+					if not chat then
+						return vim.notify("Could not get a chat buffer", vim.log.levels.ERROR)
+					end
 					local cfg = require("codecompanion.config")
 					local buffer_cmd = require("codecompanion.interactions.shared.slash_commands.buffer").new({
 						Chat = chat,
@@ -79,42 +76,65 @@ return {
 		},
 		init = function()
 			vim.cmd([[cab cc CodeCompanion]])
-			if secrets.api_key then vim.env.ANTHROPIC_API_KEY = secrets.api_key end
-			if secrets.url then vim.env.ANTHROPIC_BASE_URL = secrets.url end
 			vim.api.nvim_create_autocmd("VimEnter", {
 				once = true,
 				callback = function()
 					-- Only auto-open chat when nvim is launched blank — skip git commit,
 					-- piped stdin, opening a file, etc.
-					if vim.fn.argc(-1) > 0 then return end
-					if vim.api.nvim_buf_line_count(0) > 1 or vim.fn.getline(1) ~= "" then return end
+					if vim.fn.argc(-1) > 0 then
+						return
+					end
+					if vim.api.nvim_buf_line_count(0) > 1 or vim.fn.getline(1) ~= "" then
+						return
+					end
 					local function try_open(attempts_left)
-						if attempts_left <= 0 then return end
+						if attempts_left <= 0 then
+							return
+						end
 						local hub = pcall(require, "mcphub") and require("mcphub").get_hub_instance()
 						if hub and hub:ensure_ready() then
 							if vim.fn.exists(":CodeCompanionChat") == 2 then
 								vim.cmd("CodeCompanionChat")
 							end
 						else
-							vim.defer_fn(function() try_open(attempts_left - 1) end, 200)
+							vim.defer_fn(function()
+								try_open(attempts_left - 1)
+							end, 200)
 						end
 					end
-					vim.schedule(function() try_open(50) end) -- wait up to 10s
+					vim.schedule(function()
+						try_open(50)
+					end) -- wait up to 10s
 				end,
 			})
 		end,
 		opts = {
 			adapters = {
 				http = {
-					-- Inline/chat HTTP traffic → Bifrost
 					anthropic = function()
+						return require("codecompanion.adapters").extend("anthropic", {
+							schema = {
+								model = { default = "claude-sonnet-4-6" },
+								extended_thinking = { default = true },
+							},
+						})
+					end,
+					anthropic_bifrost = function()
+						local secrets = (function()
+							local path = vim.fn.expand("~/.config/bifrost/credentials.json")
+							local ok, data = pcall(vim.fn.readfile, path)
+							if not ok then
+								return {}
+							end
+							return vim.fn.json_decode(table.concat(data, "\n")) or {}
+						end)()
 						return require("codecompanion.adapters").extend("anthropic", {
 							url = secrets.url and (secrets.url .. "/v1/messages"),
 							env = {
 								api_key = secrets.api_key,
 							},
 							schema = {
-								model = { default = "claude-sonnet-4-5" },
+								model = { default = "claude-sonnet-4-6" },
 								extended_thinking = { default = true },
 							},
 						})
@@ -146,7 +166,57 @@ return {
 						end
 						return require("codecompanion.adapters").extend("claude_code", {
 							commands = {
-								default = { vim.fn.expand("~/.nvm/versions/node/v22.17.0/bin/node"), vim.fn.expand("~/.nvm/versions/node/v22.17.0/lib/node_modules/@agentclientprotocol/claude-agent-acp/dist/index.js") },
+								default = {
+									vim.fn.expand("~/.nvm/versions/node/v22.17.0/bin/node"),
+									vim.fn.expand(
+										"~/.nvm/versions/node/v22.17.0/lib/node_modules/@agentclientprotocol/claude-agent-acp/dist/index.js"
+									),
+								},
+								yolo = { "npx", "-y", "@agentclientprotocol/claude-agent-acp", "--yolo" },
+							},
+							env = {
+								CLAUDE_CODE_EXECUTABLE = vim.fn.expand("~/.local/bin/claude"),
+							},
+							defaults = {
+								mcpServers = mcp_servers,
+							},
+						})
+					end,
+					claude_code_bifrost = function()
+						local secrets = (function()
+							local path = vim.fn.expand("~/.config/bifrost/credentials.json")
+							local ok, data = pcall(vim.fn.readfile, path)
+							if not ok then
+								return {}
+							end
+							return vim.fn.json_decode(table.concat(data, "\n")) or {}
+						end)()
+						local instance
+						local ok = vim.wait(15000, function()
+							instance = require("mcphub").get_hub_instance()
+							return instance and instance:ensure_ready()
+						end, 100)
+						local mcp_servers = {}
+						if ok and instance then
+							mcp_servers = {
+								{
+									type = "sse",
+									name = "mcphub",
+									url = ("http://localhost:%d/mcp"):format(instance.port),
+									headers = {},
+								},
+							}
+						else
+							vim.notify("MCPHub not ready; chat opened without MCP tools", vim.log.levels.WARN)
+						end
+						return require("codecompanion.adapters").extend("claude_code", {
+							commands = {
+								default = {
+									vim.fn.expand("~/.nvm/versions/node/v22.17.0/bin/node"),
+									vim.fn.expand(
+										"~/.nvm/versions/node/v22.17.0/lib/node_modules/@agentclientprotocol/claude-agent-acp/dist/index.js"
+									),
+								},
 								yolo = { "npx", "-y", "@agentclientprotocol/claude-agent-acp", "--yolo" },
 							},
 							env = {
@@ -164,13 +234,17 @@ return {
 				chat = {
 					adapter = "claude_code",
 					roles = { user = "me", llm = "claude" },
+					system_prompt = "When spawning agents to complete tasks, never use run_in_background. Always run agents synchronously so results appear directly in this conversation.",
 					variables = {},
 					tools = {
 						["memory"] = {
 							opts = {
 								whitelist = {
 									{
-										path = (vim.fn.systemlist("git rev-parse --show-toplevel 2>/dev/null")[1] or vim.fn.getcwd()) .. "/memories",
+										path = (
+											vim.fn.systemlist("git rev-parse --show-toplevel 2>/dev/null")[1]
+											or vim.fn.getcwd()
+										) .. "/memories",
 										as = "/memories",
 									},
 								},
