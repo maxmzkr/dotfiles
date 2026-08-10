@@ -26,6 +26,11 @@ Files inside a package directory keep their leading dot (`.zshrc`, `.config/`, `
 - `neovim/` — LazyVim-based nvim config
 - `stylua/` — stylua formatter config
 - `tmux/` — main tmux config (`~/.tmux.conf`)
+- `wireplumber/` — audio output auto-switching: Bluetooth headphones take over on connect and hand back
+  on disconnect. Spans two XDG roots, because WirePlumber looks up config under `XDG_CONFIG_HOME` but
+  scripts only under `XDG_DATA_HOME` — a custom hook in `.config/wireplumber/scripts/` is silently never
+  found. Replaces the stock `find-selected-default-node` hook, whose flat +30000 boost makes a manual
+  pick outrank every device forever.
 - `zsh/` — zsh + antidote + p10k + custom scripts
 
 ## Setup
