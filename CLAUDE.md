@@ -23,6 +23,11 @@ Files inside a package directory keep their leading dot (`.zshrc`, `.config/`, `
   them in `env`, `args`, `command`, `url`, `headers`, `cwd`). The `bifrost` server reads both its
   `mcp_url` and `api_key` from the untracked `~/.config/bifrost/credentials.json`, so that file must exist
   on a new machine — see `neovim/.config/nvim/lua/plugins/` for the nvim side of the same file.
+- `librepods/` — autostart entry for LibrePods, the tray app for Beats/AirPods noise modes. The
+  AppImage itself lives at `~/Applications/librepods-x86_64.AppImage` (untracked binary), so the
+  `Exec=` path is machine-specific. It draws its icon via StatusNotifier, which GNOME only renders
+  with `gnome-shell-extension-appindicator` installed. Holds the AAP L2CAP channel while running,
+  which is the same channel `zsh/.local/bin/beats` needs — only one of the two can talk at a time.
 - `neovim/` — LazyVim-based nvim config
 - `stylua/` — stylua formatter config
 - `tmux/` — main tmux config (`~/.tmux.conf`)

@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=LibrePods
+Comment=Tray control for AirPods/Beats noise modes and battery
+Exec=/home/max/Applications/librepods-x86_64.AppImage --start-minimized
+Icon=audio-headphones
+Terminal=false
+Categories=Audio;
+X-GNOME-Autostart-enabled=true

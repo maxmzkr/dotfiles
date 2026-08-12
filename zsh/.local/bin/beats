@@ -1,0 +1,174 @@
+#!/usr/bin/env python3
+"""beats - control the noise-control mode of Apple/Beats earbuds from Linux.
+
+Talks Apple's accessory protocol (AAP) over an L2CAP channel on PSM 0x1001,
+which is separate from A2DP/HFP, so switching modes doesn't disturb playback.
+BlueZ needs the device paired and connected; no root required.
+"""
+
+import argparse
+import binascii
+import os
+import socket
+import subprocess
+import sys
+import time
+
+PSM = 0x1001
+
+HANDSHAKE = bytes.fromhex("00000400010002000000000000000000")
+# Subscribe to every notification the earbuds offer.
+NOTIFY = bytes.fromhex("04000400" "0f00" "fffffeff")
+# Setting 0x0d is noise control; the value byte follows.
+MODE_PREFIX = bytes.fromhex("04000400" "0900" "0d")
+MODE_SUFFIX = bytes.fromhex("000000")
+NOTIF_PREFIX = bytes.fromhex("04000400" "0900" "0d")
+
+MODES = {"off": 1, "anc": 2, "transparency": 3}
+NAMES = {1: "off", 2: "anc", 3: "transparency"}
+CYCLE = [1, 3, 2]  # off -> transparency -> anc -> off
+
+# Apple vendor id; the earbuds advertise it in their modalias.
+APPLE_VENDOR = "v004C"
+
+
+def connected_apple_device():
+    """Return (mac, name) of a connected Apple-vendor audio device, or None."""
+    try:
+        out = subprocess.run(
+            ["bluetoothctl", "devices", "Connected"],
+            capture_output=True,
+            text=True,
+            timeout=5,
+        ).stdout
+    except (OSError, subprocess.SubprocessError):
+        return None
+    for line in out.splitlines():
+        parts = line.split(None, 2)
+        if len(parts) < 3 or parts[0] != "Device":
+            continue
+        mac, name = parts[1], parts[2]
+        info = subprocess.run(
+            ["bluetoothctl", "info", mac], capture_output=True, text=True, timeout=5
+        ).stdout
+        if APPLE_VENDOR in info:
+            return mac, name
+    return None
+
+
+class Buds:
+    def __init__(self, mac, timeout=4.0):
+        self.sock = socket.socket(
+            socket.AF_BLUETOOTH, socket.SOCK_SEQPACKET, socket.BTPROTO_L2CAP
+        )
+        self.sock.settimeout(timeout)
+        self.sock.connect((mac, PSM))
+        self.sock.send(HANDSHAKE)
+        time.sleep(0.3)
+        self.sock.send(NOTIFY)
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *_):
+        self.sock.close()
+
+    def read_mode(self, seconds=3.0):
+        """Wait for the earbuds to report their current noise-control mode."""
+        deadline = time.time() + seconds
+        while time.time() < deadline:
+            try:
+                packet = self.sock.recv(1024)
+            except socket.timeout:
+                break
+            if packet.startswith(NOTIF_PREFIX) and len(packet) > 7:
+                return packet[7]
+        return None
+
+    def set_mode(self, value):
+        """Set the mode and return what the earbuds report back."""
+        self.sock.send(MODE_PREFIX + bytes([value]) + MODE_SUFFIX)
+        return self.read_mode()
+
+    def dump(self, seconds):
+        deadline = time.time() + seconds
+        while time.time() < deadline:
+            try:
+                packet = self.sock.recv(1024)
+            except socket.timeout:
+                continue
+            print(binascii.hexlify(packet, " ").decode())
+
+
+def notify(summary, body):
+    if os.environ.get("BEATS_NO_NOTIFY"):
+        return
+    subprocess.run(
+        ["notify-send", "-a", "beats", "-i", "audio-headphones", summary, body],
+        check=False,
+    )
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    parser.add_argument(
+        "mode",
+        nargs="?",
+        default="status",
+        choices=["status", "off", "anc", "transparency", "cycle", "raw"],
+        help="mode to set, 'cycle' to advance, 'status' to read (default), "
+        "'raw' to dump AAP packets",
+    )
+    parser.add_argument("--mac", help="device address (default: autodetect)")
+    parser.add_argument(
+        "-q", "--quiet", action="store_true", help="no desktop notification"
+    )
+    args = parser.parse_args()
+
+    mac, name = args.mac, "earbuds"
+    if not mac:
+        found = connected_apple_device()
+        if not found:
+            sys.exit("no connected Apple/Beats device found")
+        mac, name = found
+
+    try:
+        buds = Buds(mac)
+    except OSError as err:
+        sys.exit(f"could not reach {name} ({mac}) on PSM 0x{PSM:04x}: {err}")
+
+    with buds:
+        if args.mode == "raw":
+            buds.dump(30)
+            return
+
+        current = buds.read_mode()
+        if args.mode == "status":
+            print(NAMES.get(current, "unknown"))
+            return
+
+        if args.mode == "cycle":
+            if current not in CYCLE:
+                sys.exit("could not read current mode, refusing to guess")
+            target = CYCLE[(CYCLE.index(current) + 1) % len(CYCLE)]
+        else:
+            target = MODES[args.mode]
+
+        if current == target:
+            # The earbuds only notify on change, so a no-op set never confirms.
+            print(NAMES[target])
+            return
+
+        result = buds.set_mode(target)
+        if result != target:
+            sys.exit(
+                f"{name} did not confirm the change "
+                f"(wanted {NAMES[target]}, got {NAMES.get(result, 'no reply')})"
+            )
+        print(NAMES[target])
+        if not args.quiet:
+            notify(name, f"Noise control: {NAMES[target]}")
+
+
+if __name__ == "__main__":
+    main()
