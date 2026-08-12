@@ -286,9 +286,6 @@ then
   eval "$(jenv init -)"
 fi
 
-export GOPROXY=https://athens.ops.cencorp.io
-export GONOSUMDB="github.com/censys/*"
-
 # tenv
 export PATH="/snap/tenv/292:$PATH"
 

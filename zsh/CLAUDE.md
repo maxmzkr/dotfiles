@@ -21,7 +21,7 @@ Stow package for zsh + supporting scripts. Symlinks into `$HOME`:
 - PATH additions: `~/.bin`, coursier, krew, linuxbrew, snap/tenv, jenv
 - Aliases: `vim → nvim`, kubectl shortcuts (`kg`, `kd`, `kw`, `kgj`), git shortcuts (`gcr`, `gmt`, `gcpt`), `sudo`/`watch`/`ipdb` trailing-space tricks
 - Custom funcs: `notif`, `set-title`, `new-ses`, `venv`/`makevenv`/`vf` (manage `~/.venvs`)
-- Censys-specific: `GOPROXY=https://athens.ops.cencorp.io`, `GONOSUMDB=github.com/censys/*`
+- Work-specific env (Go proxy, private module sumdb) lives in the private `zshwork` package, not here
 
 ## Plugin loading order
 
