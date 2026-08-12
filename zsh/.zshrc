@@ -1,14 +1,13 @@
-# trying p10k plugin
-# # Enable Powerlevel10k instant prompt. Should stay close to the top of ~/.zshrc.  Initialization code that may require console input (password prompts, [y/n]
-# # confirmations, etc.) must go above this block; everything else may go below.
 # zmodload zsh/zprof
-# if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]; then
-#   source "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh"
-# fi
 
 # I'm not sure what, but something is already setting this
 # export PATH=/home/max/.local/bin:$PATH
-export SSH_AUTH_SOCK=/run/user/1000/gnupg/S.gpg-agent.ssh
+# gpg-agent's ssh socket. Guarded and derived from XDG_RUNTIME_DIR rather than
+# hardcoding uid 1000: pointing SSH_AUTH_SOCK at a socket that isn't there
+# breaks ssh outright, including on machines that use plain ssh-agent.
+_gpg_ssh_sock="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}/gnupg/S.gpg-agent.ssh"
+[[ -S $_gpg_ssh_sock ]] && export SSH_AUTH_SOCK=$_gpg_ssh_sock
+unset _gpg_ssh_sock
 export EDITOR='vim'
 # IF I remove this, then my vim color is all green
 export TERM="screen-256color"
@@ -106,24 +105,38 @@ zstyle ':fzf-tab:*' fzf-flags --color=light
 # zstyle ':fzf-tab:*' fzf-command ftb-tmux-popup
 
 #### antidote
-source ~/.antidote/antidote.zsh
-# Set the root name of the plugins files (.txt and .zsh) antidote will use.
-zsh_plugins=${ZDOTDIR:-~}/.zsh_plugins
-
-# Ensure the .zsh_plugins.txt file exists so you can add plugins.
-[[ -f ${zsh_plugins}.txt ]] || touch ${zsh_plugins}.txt
-
-# Lazy-load antidote from its functions directory.
-fpath=(~/.antidote/functions $fpath)
-autoload -Uz antidote
-
-# Generate a new static file whenever .zsh_plugins.txt is updated.
-if [[ ! ${zsh_plugins}.zsh -nt ${zsh_plugins}.txt ]]; then
-  antidote bundle <${zsh_plugins}.txt >|${zsh_plugins}.zsh
+# Bootstrap on a fresh machine. Without this, every line below `source
+# ~/.antidote/antidote.zsh` in this block fails and the shell comes up with no
+# plugins, no completions and no prompt — antidote owns .zshrc.d too.
+if [[ ! -e ~/.antidote/antidote.zsh ]]; then
+  if (( $+commands[git] )); then
+    print -u2 "zshrc: bootstrapping antidote into ~/.antidote"
+    git clone --depth 1 https://github.com/mattmc3/antidote.git ~/.antidote
+  else
+    print -u2 "zshrc: ~/.antidote is missing and git isn't installed — running without plugins or prompt"
+  fi
 fi
 
-# Source your static plugins file.
-source ${zsh_plugins}.zsh
+if [[ -e ~/.antidote/antidote.zsh ]]; then
+  source ~/.antidote/antidote.zsh
+  # Set the root name of the plugins files (.txt and .zsh) antidote will use.
+  zsh_plugins=${ZDOTDIR:-~}/.zsh_plugins
+
+  # Ensure the .zsh_plugins.txt file exists so you can add plugins.
+  [[ -f ${zsh_plugins}.txt ]] || touch ${zsh_plugins}.txt
+
+  # Lazy-load antidote from its functions directory.
+  fpath=(~/.antidote/functions $fpath)
+  autoload -Uz antidote
+
+  # Generate a new static file whenever .zsh_plugins.txt is updated.
+  if [[ ! ${zsh_plugins}.zsh -nt ${zsh_plugins}.txt ]]; then
+    antidote bundle <${zsh_plugins}.txt >|${zsh_plugins}.zsh
+  fi
+
+  # Source your static plugins file.
+  source ${zsh_plugins}.zsh
+fi
 #### /antidote
 
 bindkey -v
@@ -131,19 +144,24 @@ bindkey -v
 # Cache task completion: `eval $(task --completion zsh)` execs `task` every
 # startup (~20-30ms). Cache the output and regenerate when the task binary
 # changes.
-_task_completion_cache="${ZSH_CACHE_DIR:-$HOME/.cache/zsh}/task-completion.zsh"
-if [[ ! -s $_task_completion_cache || $commands[task] -nt $_task_completion_cache ]]; then
-  mkdir -p ${_task_completion_cache:h}
-  task --completion zsh >| $_task_completion_cache
+if (( $+commands[task] )); then
+  _task_completion_cache="${ZSH_CACHE_DIR:-$HOME/.cache/zsh}/task-completion.zsh"
+  if [[ ! -s $_task_completion_cache || $commands[task] -nt $_task_completion_cache ]]; then
+    mkdir -p ${_task_completion_cache:h}
+    task --completion zsh >| $_task_completion_cache
+  fi
+  source $_task_completion_cache
+  unset _task_completion_cache
 fi
-source $_task_completion_cache
-unset _task_completion_cache
 
 export GPG_TTY="${TTY}"
 
-export PATH=/home/max/.bin:$PATH
-export PATH=/home/max/.local/share/coursier/bin:$PATH
-export PATH="${KREW_ROOT:-$HOME/.krew}/bin:$PATH"
+# Only prepend dirs that exist, so $PATH doesn't collect phantom entries on a
+# machine that never installed the tool. (None of these three exist here.)
+for _dir in $HOME/.bin $HOME/.local/share/coursier/bin ${KREW_ROOT:-$HOME/.krew}/bin; do
+  [[ -d $_dir ]] && path=($_dir $path)
+done
+unset _dir
 
 
 export DEBFULLNAME="Max Mizikar"
@@ -257,8 +275,9 @@ alias gcpt='git commit -p'
 # alias docker=podman
 
 # `terraform` lives at /snap/bin/terraform (the old tfenv path was stale).
-# `complete -C` needs bashcompinit, which the nvm plugin already autoloads.
-if (( $+commands[terraform] )); then
+# `complete -C` needs bashcompinit, which the nvm plugin already autoloads — so
+# check for it, since it's gone if plugin loading failed.
+if (( $+commands[terraform] && $+functions[complete] )); then
   complete -o nospace -C ${commands[terraform]} terraform
 fi
 
@@ -268,17 +287,25 @@ if command -v pyenv &> /dev/null
 then
   eval "$(pyenv virtualenv-init -)"
 fi
-export HOMEBREW_PREFIX="/home/linuxbrew/.linuxbrew";
-export HOMEBREW_CELLAR="/home/linuxbrew/.linuxbrew/Cellar";
-export HOMEBREW_REPOSITORY="/home/linuxbrew/.linuxbrew/Homebrew";
-export PATH="/home/linuxbrew/.linuxbrew/bin:/home/linuxbrew/.linuxbrew/sbin${PATH+:$PATH}";
-export MANPATH="/home/linuxbrew/.linuxbrew/share/man${MANPATH+:$MANPATH}:";
-export INFOPATH="/home/linuxbrew/.linuxbrew/share/info:${INFOPATH:-}";
+# linuxbrew (absent on this machine — the exports used to run unconditionally)
+if [[ -d /home/linuxbrew/.linuxbrew ]]; then
+  export HOMEBREW_PREFIX="/home/linuxbrew/.linuxbrew";
+  export HOMEBREW_CELLAR="/home/linuxbrew/.linuxbrew/Cellar";
+  export HOMEBREW_REPOSITORY="/home/linuxbrew/.linuxbrew/Homebrew";
+  export PATH="/home/linuxbrew/.linuxbrew/bin:/home/linuxbrew/.linuxbrew/sbin${PATH+:$PATH}";
+  export MANPATH="/home/linuxbrew/.linuxbrew/share/man${MANPATH+:$MANPATH}:";
+  export INFOPATH="/home/linuxbrew/.linuxbrew/share/info:${INFOPATH:-}";
+fi
 
-eval $(dircolors /home/max/.dir_colors/dircolors)
+# Machine-specific and untracked; the dircolors block above already falls back to
+# `dircolors -b` defaults, so just skip this when the file isn't there.
+[[ -r ~/.dir_colors/dircolors ]] && eval $(dircolors ~/.dir_colors/dircolors)
 
-alias vim='nvim'
-export KUBE_EDITOR=nvim
+# Don't alias vim away to a binary that isn't installed yet.
+if (( $+commands[nvim] )); then
+  alias vim='nvim'
+  export KUBE_EDITOR=nvim
+fi
 
 if command -v jenv &> /dev/null
 then
@@ -286,19 +313,20 @@ then
   eval "$(jenv init -)"
 fi
 
-# tenv
-export PATH="/snap/tenv/292:$PATH"
+# tenv. `current` follows the snap revision — the old hardcoded /snap/tenv/292
+# is gone on this machine already.
+[[ -d /snap/tenv/current ]] && path=(/snap/tenv/current $path)
 
 # zprof
 
-# Lazy-load gvm: sourcing /home/max/.gvm/scripts/gvm costs ~230ms (it overrides
+# Lazy-load gvm: sourcing ~/.gvm/scripts/gvm costs ~230ms (it overrides
 # `cd` and pre-loads env files). Defer until the first `gvm` call. Note: this
 # DROPS gvm's automatic GOROOT/GOPATH switching on `cd` — fine because system
 # `go` is in PATH and the cd override was the slowest part.
-if [[ -s "/home/max/.gvm/scripts/gvm" ]]; then
+if [[ -s ~/.gvm/scripts/gvm ]]; then
   gvm() {
     unfunction gvm
-    source "/home/max/.gvm/scripts/gvm"
+    source ~/.gvm/scripts/gvm
     gvm "$@"
   }
 fi
