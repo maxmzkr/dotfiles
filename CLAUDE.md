@@ -13,7 +13,6 @@ Files inside a package directory keep their leading dot (`.zshrc`, `.config/`, `
 ## Packages
 
 - `byobu/` — byobu's bundled tmux config (forces zsh)
-- `dconf/` — GNOME/dconf settings dump (binary GVariant DB)
 - `git/` — global git config (`~/.gitconfig`)
 - `gitwork/` — work-only git overrides, included from `~/.gitconfig`
 - `golangci-lint/` — `~/.golangci.yaml`
