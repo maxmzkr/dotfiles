@@ -1,0 +1,33 @@
+#!/bin/sh
+# Send stdin to the system clipboard, choosing the backend from whichever
+# display server the attached tmux client is using.
+#
+# tmux runs copy-pipe commands in the *session* environment, which is refreshed
+# on every client attach -- but only for the variables named in
+# `update-environment`. WAYLAND_DISPLAY is not in tmux's default list, so
+# .tmux.conf adds it; without that, detaching from a Wayland session and
+# reattaching from an X one would still land text in the dead Wayland clipboard.
+#
+# Falling through with no backend is not a failure: `set-clipboard on` has
+# already handed the text to the terminal emulator over OSC 52, which is what
+# carries the copy when neither tool is installed or when tmux runs over ssh.
+set -u
+
+buf=$(mktemp) || exit 0
+trap 'rm -f "$buf"' EXIT
+cat >"$buf"
+
+# Both selections get set: OSC 52 reliably covers CLIPBOARD but not PRIMARY,
+# so middle-click paste depends on these.
+if [ -n "${WAYLAND_DISPLAY:-}" ] && command -v wl-copy >/dev/null 2>&1; then
+	wl-copy <"$buf"
+	wl-copy --primary <"$buf"
+elif [ -n "${DISPLAY:-}" ] && command -v xclip >/dev/null 2>&1; then
+	xclip -selection clipboard <"$buf"
+	xclip -selection primary <"$buf"
+elif [ -n "${DISPLAY:-}" ] && command -v xsel >/dev/null 2>&1; then
+	xsel --clipboard --input <"$buf"
+	xsel --primary --input <"$buf"
+fi
+
+exit 0
