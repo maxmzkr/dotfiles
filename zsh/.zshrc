@@ -167,8 +167,8 @@ fi
 export GPG_TTY="${TTY}"
 
 # Only prepend dirs that exist, so $PATH doesn't collect phantom entries on a
-# machine that never installed the tool. (None of these three exist here.)
-for _dir in $HOME/.bin $HOME/.local/share/coursier/bin ${KREW_ROOT:-$HOME/.krew}/bin; do
+# machine that never installed the tool.
+for _dir in $HOME/.bin ${GOPATH:-$HOME/go}/bin $HOME/.local/share/coursier/bin ${KREW_ROOT:-$HOME/.krew}/bin; do
   [[ -d $_dir ]] && path=($_dir $path)
 done
 unset _dir
