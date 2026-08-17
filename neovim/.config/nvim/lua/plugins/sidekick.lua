@@ -29,6 +29,9 @@ return {
 							ANTHROPIC_BASE_URL = false,
 							ANTHROPIC_API_KEY = false,
 							ANTHROPIC_AUTH_TOKEN = false,
+							-- See TMUX note below.
+							TMUX = false,
+							TMUX_PANE = false,
 						},
 					},
 					-- Same claude binary, routed through the Bifrost proxy. Use when
@@ -39,8 +42,21 @@ return {
 							ANTHROPIC_BASE_URL = secrets.url,
 							ANTHROPIC_API_KEY = secrets.api_key,
 							ANTHROPIC_AUTH_TOKEN = false,
+							TMUX = false,
+							TMUX_PANE = false,
 						},
 					},
+					-- TMUX/TMUX_PANE are cleared because nvim runs inside tmux and the
+					-- vars would be inherited, but the terminal claude actually talks to
+					-- is nvim's own emulator. Claude enables mouse tracking (1003+SGR)
+					-- and does its own selection, then copies with OSC 52 — wrapped in
+					-- tmux's `ESC P tmux; ...` DCS passthrough when it thinks it's under
+					-- tmux. libvterm doesn't unwrap that, so the doubled ESC breaks the
+					-- parse and `52;c;<base64 of the selection>` gets painted over the
+					-- input box until the next full redraw. Unset, claude emits plain
+					-- OSC 52, which nvim's terminal does understand and turns into a
+					-- real clipboard write. Enabling `cli.mux.backend` would put claude
+					-- in an actual tmux pane and this would have to go.
 				},
 			},
 		},
@@ -48,7 +64,12 @@ return {
 			{
 				"<leader>aa",
 				function()
-					require("sidekick.cli").toggle({ name = "claude", filter = { cwd = true }, focus = true })
+					-- No `filter = { cwd = true }`. That filter only matches tools that
+					-- already have a running session in this cwd (state.lua `is()`
+					-- requires `t.session`), so with nothing running it matches zero
+					-- tools and warns "No tools match the given filter" instead of
+					-- starting one.
+					require("sidekick.cli").toggle({ name = "claude", focus = true })
 				end,
 				desc = "Toggle Claude (subscription)",
 				mode = { "n", "v" },
@@ -56,7 +77,7 @@ return {
 			{
 				"<leader>ab",
 				function()
-					require("sidekick.cli").toggle({ name = "claude-bifrost", filter = { cwd = true }, focus = true })
+					require("sidekick.cli").toggle({ name = "claude-bifrost", focus = true })
 				end,
 				desc = "Toggle Claude (Bifrost proxy)",
 				mode = { "n", "v" },
@@ -83,7 +104,7 @@ return {
 						return
 					end
 					vim.schedule(function()
-						require("sidekick.cli").toggle({ name = "claude", filter = { cwd = true }, focus = true })
+						require("sidekick.cli").toggle({ name = "claude", focus = true })
 					end)
 				end,
 			})
