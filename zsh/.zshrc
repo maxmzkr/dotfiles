@@ -33,6 +33,16 @@ ZSH_TMUX_AUTOSTART=true;
 ZSH_TMUX_AUTOCONNECT=true;
 
 #### nvm
+# Lazy loading defines node/npm/npx as shell *functions*, which child processes
+# can't see — so nvim's mcp-hub build (and anything else shelling out to npm)
+# fails with "Executable not found" even though nvm has a version installed.
+# Put the newest installed version's bin on PATH directly: real binaries for
+# children, no nvm.sh sourcing, no startup cost. (N) skips it when nvm is empty,
+# om[1] picks the most recently installed version.
+_node_bin=(~/.nvm/versions/node/*/bin(N/om[1]))
+[[ -n $_node_bin ]] && path=($_node_bin $path)
+unset _node_bin
+
 # Lazy-load nvm: sourcing nvm.sh costs ~250ms at startup. lazy yes defers it
 # until the first nvm/node/npm/etc. invocation. Autoload-on-cd via .nvmrc
 # stops working in lazy mode — re-enable lazy no if you need that.
