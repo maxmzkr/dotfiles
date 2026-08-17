@@ -81,3 +81,12 @@ while the transcripts beside it stay local. Once both packages are stowed, `hook
 and `skills/` are unfolded into real directories with per-file symlinks — that's
 expected, not damage.
 
+**Don't restow this package while Claude Code is running.** `stow -R` unlinks every
+file and relinks it, so there is a window with no `hooks/pr_body_check.py` on disk —
+and a hook registered by absolute path that isn't there makes every tool call fail,
+including the ones needed to fix it. Restow from a shell outside Claude Code. Older
+stow versions also refuse to restow once two packages share `hooks/` and `skills/`,
+erroring with `unstow_contents() called with invalid target`; unfolding those two
+directories by hand (a real directory of per-file symlinks) is what stow would have
+produced anyway, and it resolves the error.
+
