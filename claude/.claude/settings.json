@@ -1,0 +1,99 @@
+{
+  "permissions": {
+    "defaultMode": "auto"
+  },
+  "model": "opus[1m]",
+  "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "paplay --volume=49152 /usr/share/sounds/freedesktop/stereo/bell.oga 2>/dev/null || true",
+            "async": true
+          },
+          {
+            "type": "command",
+            "command": "[ -n \"$TMUX_PANE\" ] && tmux set-option -t \"$TMUX_PANE\" @claude_waiting 1 2>/dev/null; true",
+            "async": true
+          }
+        ]
+      }
+    ],
+    "Notification": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "paplay --volume=49152 /usr/share/sounds/freedesktop/stereo/window-attention.oga 2>/dev/null || true",
+            "async": true
+          },
+          {
+            "type": "command",
+            "command": "[ -n \"$TMUX_PANE\" ] && tmux set-option -t \"$TMUX_PANE\" @claude_waiting 1 2>/dev/null; true",
+            "async": true
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 -S /home/max/.claude/hooks/git_events.py",
+            "timeout": 10
+          },
+          {
+            "type": "command",
+            "command": "[ -n \"$TMUX_PANE\" ] && tmux set-option -u -t \"$TMUX_PANE\" @claude_waiting 2>/dev/null; true"
+          }
+        ]
+      }
+    ],
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 -S /home/max/.claude/hooks/git_events.py",
+            "timeout": 10
+          },
+          {
+            "type": "command",
+            "command": "[ -n \"$TMUX_PANE\" ] && tmux set-option -u -t \"$TMUX_PANE\" @claude_waiting 2>/dev/null; true"
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Bash|mcp__.*__(create|update)_pull_request",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 -S /home/max/.claude/hooks/pr_body_check.py"
+          }
+        ]
+      },
+      {
+        "matcher": "Bash|mcp__.*__(create_or_update_file|push_files|merge_pull_request)",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 -S /home/max/.claude/hooks/commit_trailer_check.py"
+          }
+        ]
+      }
+    ]
+  },
+  "enabledPlugins": {
+    "gopls-lsp@claude-plugins-official": true,
+    "superpowers@claude-plugins-official": true
+  },
+  "effortLevel": "medium",
+  "tui": "fullscreen",
+  "theme": "light",
+  "preferredNotifChannel": "notifications_disabled",
+  "useAutoModeDuringPlan": true
+}

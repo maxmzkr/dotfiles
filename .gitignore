@@ -2,4 +2,6 @@ neovim/.config/nvim/lazy-lock.json
 
 # Claude Code: ignore local-only settings, keep shared settings.json tracked
 .claude/settings.local.json
+claude/.claude/settings.local.json
 
+__pycache__/

@@ -13,6 +13,10 @@ Files inside a package directory keep their leading dot (`.zshrc`, `.config/`, `
 ## Packages
 
 - `byobu/` — byobu's bundled tmux config (forces zsh)
+- `claude/` — Claude Code user-level config: skills, hooks, settings, and the instructions
+  loaded in every project. Registers its hooks by **absolute path**, so it must be stowed
+  before Claude Code runs — a missing hook file makes every tool call fail, not just the
+  writes it guards.
 - `git/` — global git config (`~/.gitconfig`)
 - `gitwork/` — work-only git overrides, included from `~/.gitconfig`
 - `golangci-lint/` — `~/.golangci.yaml`
@@ -73,4 +77,6 @@ lands in your working tree.
 
 ## CLAUDE.md and stow
 
-Some subdirectories have a `CLAUDE.md`. Stow has no default rule to skip them, so `stow zsh` will symlink (for example) `~/.zshrc.d/CLAUDE.md` into `$HOME`. If that's a problem, add a `.stow-local-ignore` at the repo root with `CLAUDE\.md`.
+Some subdirectories have a `CLAUDE.md`. Stow has no default rule to skip them, so `stow zsh` will symlink (for example) `~/.zshrc.d/CLAUDE.md` into `$HOME`. A package's root `CLAUDE.md` lands as `~/CLAUDE.md`, where Claude Code loads it as instructions for every project under `$HOME` — worth knowing before writing one.
+
+To skip them, `.stow-local-ignore` has to go in **each package's own top level** (stow reads `$STOW_DIR/$PACKAGE/.stow-local-ignore`); a copy at the repo root does nothing. For a one-off, `stow --ignore='CLAUDE\.md' <package>` works without adding files.
