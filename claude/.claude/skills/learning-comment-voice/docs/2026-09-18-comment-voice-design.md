@@ -237,8 +237,8 @@ registered by absolute path and take down every tool call when absent.
 
 The one failure that cannot be prevented at capture time is a **misattribution**:
 a comment credited to Max because his commit-walk edit happened to touch a line
-Claude authored. It is caught by the corpus being reviewable JSON in git, and
-fixed by deleting the file.
+Claude authored. It is caught by step 7 of capture reporting every record it
+wrote, comment by comment, and fixed by deleting the file.
 
 ## Public / work split
 

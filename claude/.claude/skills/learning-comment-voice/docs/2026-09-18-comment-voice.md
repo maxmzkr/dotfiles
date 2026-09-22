@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Capture the comments Max writes by hand during an interactive commit walk into a git-tracked corpus, and serve relevant exemplars back to Claude before it writes or rewrites a comment.
+**Goal:** Capture the comments Max writes by hand during an interactive commit walk into a machine-local corpus, and serve relevant exemplars back to Claude before it writes or rewrites a comment.
 
 **Architecture:** A work-private skill extracts comment hunks from the diff of Max's hand edits and writes one JSON record per comment. A query CLI filters those records by mechanical facets and returns exemplars, using a full-corpus backend while the corpus is small and swapping to vector similarity once it outgrows the context window. Capture and query never call each other; they meet at the corpus directory on disk.
 
@@ -180,10 +180,14 @@ Expected: FAIL with `ModuleNotFoundError: No module named 'voice_corpus'`
 #!/usr/bin/env python3
 """The comment-voice corpus: one JSON file per comment Max wrote.
 
-Flat and append-only, so concurrent sessions cannot conflict and `git log` on the
-directory reads as a history of what has been learned. Correcting a bad capture is
-deleting a file -- that is the whole correction mechanism, and it is why the corpus
-is git-tracked rather than stashed in a cache directory.
+Flat and append-only, so concurrent sessions cannot conflict. One file per record
+is what makes correcting a bad capture deleting a file -- that is the whole
+correction mechanism, and it needs the records to be separately readable and
+separately removable, which a single append-only log would not be.
+
+The corpus is machine-local and untracked (see DEFAULT_CORPUS below). It holds
+verbatim code from every repository Max works in, so committing it anywhere would
+publish that code.
 
 Vectors are deliberately absent. They are derived from these records, and a derived
 value living in the authoritative file goes stale without anyone noticing.
@@ -1764,3 +1768,54 @@ real use is the proof:
 
 Do not report the system working until step 5 has produced output from a corpus
 built by step 2. A query against a hand-written corpus proves only the query.
+
+---
+
+## Corrections found during execution
+
+This plan was executed on 2026-09-21. The code blocks above are what was
+*proposed*; five defects surfaced in review and the committed modules differ
+accordingly. **The modules under `scripts/` are the source of truth** — the blocks
+here are kept as written so the reasoning that produced them stays legible, but do
+not transcribe them fresh without applying these.
+
+1. **Task 2, rewrite suppression was file-wide.** `if not added: deleted.extend(removed)`
+   drops *every* deleted comment in a file whenever any comment was added anywhere in
+   it, and `_file_chunks` flattened all hunks into one body so the "same hunk" the
+   inline comment claims never existed. Deleted comments are the rulebook's evidence,
+   so this discarded them silently. Fixed with per-hunk bodies and adjacency-based pair
+   detection: a removed comment is suppressed only when its `-` run is immediately
+   followed by a `+` run containing a comment.
+
+2. **Task 2, `code` was not comment-blind for trailing comments.** Only whole-line
+   comments were stripped, so `x := 1 // seconds, not millis` kept its comment text in
+   `code` — the field that exists precisely so the describing subagent never sees the
+   comment. Fixed by keeping the code portion and dropping the comment portion.
+
+3. **Task 7, `_placement` misread multi-line doc comments.** The forward scan for a
+   declaration skipped blank lines but not other comment lines, so the first line of any
+   two-line doc comment saw the second line, failed the declaration match, and returned
+   `block`. Every multi-line doc comment was misclassified. The unit helper only ever
+   built single-line comments, which is why 20 tests missed it and the end-to-end test
+   caught it immediately. The first fix over-corrected — skipping comment lines
+   unconditionally also merged runs separated by a blank line, which in Go is exactly
+   what makes a comment *not* a doc comment. Final rule: skip contiguous comment lines
+   only.
+
+4. **Task 6 and Task 9, paths did not resolve at runtime.** Both skills invoked scripts
+   by paths relative to this repository, but a skill runs with the working directory set
+   to whatever project the user is in. The relative hop between packages is unavailable
+   too: `~/.claude/skills/<skill>` is a symlink, so `cd`-ing through it lands in the
+   physical package directory and `..` climbs inside that package rather than into the
+   shared `~/.claude/` tree. Both now use `~/.claude/skills/learning-comment-voice/scripts/...`,
+   and the capture step uses `PYTHONPATH` rather than `cd`.
+
+5. **Counts in this plan are stale by construction.** Task 2's "16 tests" was a miscount
+   of its own code block (17), and the suite grew as fixes added coverage. The final
+   suite is 60 tests, 5 of which skip because `numpy` and `sentence-transformers` are
+   not installed — the designed outcome, not a gap.
+
+**Task 8 was never executed.** It would have called capture directly from
+`editing-commits-interactively`, but that skill was uncommitted and absent from this
+branch. Capture therefore fires only when Claude matches this skill's own description.
+Applying Task 8 once that skill is committed is the single highest-value follow-up.
