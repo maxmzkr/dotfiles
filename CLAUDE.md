@@ -31,17 +31,43 @@ Files inside a package directory keep their leading dot (`.zshrc`, `.config/`, `
   `Exec=` path is machine-specific. It draws its icon via StatusNotifier, which GNOME only renders
   with `gnome-shell-extension-appindicator` installed. Holds the AAP L2CAP channel while running,
   which is the same channel `zsh/.local/bin/beats` needs — only one of the two can talk at a time.
+  ERTM does **not** have to be disabled for AAP here (`disable_ertm` is `N` and it connects
+  anyway), so no kernel parameter is involved despite what most AirPods-on-Linux guides say.
+
+  The binary comes from the `linux-v0.1.0` **pre-release** of `librepods-org/librepods` (the repo
+  moved from `kavishdevar/`, and the GitHub API 301s rather than redirecting — `curl -L`). Ordinary
+  releases carry Android APKs only, and the nightly `ci-linux-rust.yml` artifacts the linux README
+  recommends expire after 90 days, so they are usually already gone. `Exec=` passes
+  `--appimage-extract-and-run` because noble has no `libfuse2t64`; drop the
+  flag if that package ever gets installed.
 - `neovim/` — LazyVim-based nvim config
 - `starship/` — starship prompt config (`~/.config/starship.toml`), the replacement for
   powerlevel10k. Separate from `zsh/` so the prompt can be stowed on its own; the shell-side
   init lives in `zsh/.zshrc.d/starship.zsh`. Config is ASCII-only — no Nerd Font required.
 - `stylua/` — stylua formatter config
 - `tmux/` — main tmux config (`~/.tmux.conf`)
-- `wireplumber/` — audio output auto-switching: Bluetooth headphones take over on connect and hand back
-  on disconnect. Spans two XDG roots, because WirePlumber looks up config under `XDG_CONFIG_HOME` but
+- `wireplumber/` — audio device priorities and output auto-switching: Bluetooth headphones take over on
+  connect and hand back on disconnect, and the Brio's mic stays the default input. Carries **two
+  configurations**, for WirePlumber 0.5 and 0.4, because noble ships 0.4.17 and there is no 0.5 in the
+  archive. The two read disjoint paths — 0.5 reads `.config/wireplumber/wireplumber.conf.d/` and
+  `.local/share/wireplumber/scripts/`, 0.4 reads `.config/wireplumber/{main,bluetooth}.lua.d/` — so one
+  stow package works on either machine and each version ignores the other's files.
+
+  The 0.5 half spans two XDG roots, because WirePlumber looks up config under `XDG_CONFIG_HOME` but
   scripts only under `XDG_DATA_HOME` — a custom hook in `.config/wireplumber/scripts/` is silently never
-  found. Replaces the stock `find-selected-default-node` hook, whose flat +30000 boost makes a manual
-  pick outrank every device forever.
+  found. Its `sticky-default-node.lua` replaces the stock `find-selected-default-node` hook, whose flat
+  +30000 boost makes a manual pick outrank every device forever.
+
+  **That script has no 0.4 counterpart.** In 0.4 the selection lives in the `default-nodes` C module,
+  not a Lua hook chain, so there is nothing to override — the 0.4 half ports only the priorities and
+  `use-persistent-storage = false`. Consequence: on 0.4 a manual pick holds for the rest of the session
+  even if higher-priority headphones connect after it. It does not survive a restart.
+
+  0.4 fragments are additive across config dirs — `/usr/share` first, then `~/.config`, merged and
+  sorted by filename — so a `51-` file must `table.insert` into `alsa_monitor.rules` /
+  `bluez_monitor.rules` rather than assign them, or it drops the defaults that `50-*-config.lua` set.
+  Priority only decides the default when nothing is pinned, so the two halves are load-bearing together:
+  turning persistence off is what makes the numbers matter at every boot.
 - `zsh/` — zsh + antidote + custom scripts (prompt is in `starship/`)
 
 ## Setup
