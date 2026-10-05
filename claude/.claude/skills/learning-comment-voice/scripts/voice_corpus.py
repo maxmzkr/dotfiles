@@ -20,7 +20,7 @@ import json
 import os
 from pathlib import Path
 
-PLACEMENTS = ("doc", "block", "trailing")
+PLACEMENTS = ("doc", "block", "trailing", "pr-body")
 KINDS = ("why", "warning", "contract", "domain", "pointer")
 
 STATS_NAME = "_stats.jsonl"
@@ -57,19 +57,42 @@ def record_id(comment: str, code: str) -> str:
     return digest.hexdigest()[:16]
 
 
-def write_record(rec: Record, corpus_dir: Path) -> Path:
+def _checked(corpus_dir: Path | None) -> Path:
+    """The corpus directory to write to, refusing a tracked one.
+
+    The corpus is machine-local and must never be committed. A prose warning did
+    not prevent a capture run from writing it into the stow package that ships
+    the skill, so the check lives here, where the write happens.
+    """
+    path = Path(corpus_dir) if corpus_dir is not None else DEFAULT_CORPUS
+    resolved = path.expanduser().resolve()
+    for parent in (resolved, *resolved.parents):
+        if (parent / ".git").exists():
+            raise ValueError(
+                f"corpus dir {resolved} is inside the git repo at {parent}; "
+                f"the corpus is machine-local — leave corpus_dir unset to use "
+                f"{DEFAULT_CORPUS}"
+            )
+        if parent == Path.home():
+            break
+    return resolved
+
+
+def write_record(rec: Record, corpus_dir: Path | None = None) -> Path:
+    corpus_dir = _checked(corpus_dir)
     corpus_dir.mkdir(parents=True, exist_ok=True)
     path = corpus_dir / f"{rec.id}.json"
     path.write_text(json.dumps(dataclasses.asdict(rec), indent=2) + "\n")
     return path
 
 
-def load_records(corpus_dir: Path) -> list[Record]:
+def load_records(corpus_dir: Path | None = None) -> list[Record]:
     """Every readable record. A malformed file is skipped, never raised.
 
     Retrieval that returns fewer exemplars is a degraded result; retrieval that
     raises takes down the skill calling it.
     """
+    corpus_dir = Path(corpus_dir) if corpus_dir is not None else DEFAULT_CORPUS
     if not corpus_dir.is_dir():
         return []
     out = []
@@ -82,7 +105,7 @@ def load_records(corpus_dir: Path) -> list[Record]:
 
 
 def append_stats(
-    corpus_dir: Path,
+    corpus_dir: Path | None = None,
     *,
     repo: str,
     commit: str,
@@ -96,6 +119,7 @@ def append_stats(
     Comment edits per commit-walk trending down is the only evidence this system
     does anything, so the count is recorded from the first run.
     """
+    corpus_dir = _checked(corpus_dir)
     corpus_dir.mkdir(parents=True, exist_ok=True)
     row = {
         "captured": captured,

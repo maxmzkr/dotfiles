@@ -8,6 +8,8 @@ description: >-
   rewrite code comments and wants to match Max's voice rather than a generic
   register. Triggers on "capture my comments", "learn from these edits", "what
   would I have written here", or immediately after a rebase stop's edits land.
+  Also use when Max has edited a PR description on GitHub ("I rewrote the
+  description", "capture my PR edits"), and before drafting any PR body.
 ---
 
 # Learning comment voice
@@ -87,6 +89,8 @@ for label, group in (('voice', voice), ('deleted', deleted)):
    input.
 
 4. **Write the records.** One per voice candidate, via `voice_corpus.write_record`.
+   Leave `corpus_dir` unset — it defaults to the machine-local corpus and refuses
+   any path inside a git repo, so there is no directory to choose or get wrong.
    `Record` has twelve fields and no defaults; here is where each one comes from:
 
    - `comment`, `placement`, `language`, `code`, `path` — copied verbatim from the
@@ -122,7 +126,36 @@ for label, group in (('voice', voice), ('deleted', deleted)):
    prevented at capture time — the only defence is Max seeing it immediately and
    deleting the file.
 
+## Capture: PR descriptions
+
+Run this when Max says he edited a PR's description, or when a PR you drafted
+shows `lastEditedAt` later than your last `gh pr edit`. A backfill over his past
+PRs is the same command once per PR number.
+
+GitHub credits every edit to Max, including yours through `gh`, so the editor
+proves nothing. The line endings do: a body saved from the browser comes back
+CRLF, and one posted through `gh` comes back LF. `voice_pr.py` keeps the CRLF
+versions and diffs each run of them, paragraph by paragraph, against the LF draft
+before it.
+
+```bash
+python3 ~/.claude/skills/learning-comment-voice/scripts/voice_pr.py \
+    --repo <owner/name> --out /tmp/pr-candidates.json <number>
+```
+
+Then run steps 3-7 above on `/tmp/pr-candidates.json`, with these differences:
+
+- The describing subagent gets the candidate's `code` — the PR title and changed
+  files — never the body, and describes what the change presents to a reviewer.
+- `commit` is the file's top-level `commit`; `enclosing` is `None`.
+- Deleted paragraphs are the draft he cut. Report them in step 7; a pattern among
+  them belongs in `writing-pr-descriptions`, proposed rather than added, not in
+  the comment rulebook.
+
 ## Query
+
+Before drafting a PR body, run step 2 below with `--placement pr-body
+--language markdown` and a one-line situation describing the change.
 
 Before writing or rewriting a comment:
 
@@ -166,4 +199,5 @@ returning the whole filtered corpus.
 - Writing a vector into a record — vectors are derived and live in the index.
 - Adding a rule to `rules.md` that Max has not endorsed.
 - Committing a corpus file, a `corpus/` directory, or a sample record into the
-  dotfiles repo. The corpus is machine-local and untracked.
+  dotfiles repo. The corpus is machine-local and untracked; passing a
+  `corpus_dir` inside a repo now raises rather than writing there.
