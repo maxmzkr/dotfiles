@@ -182,6 +182,26 @@ else
     fi
 fi
 
+# Kick off per-repo setup (e.g. fetching submodules, generating protobufs) in
+# the background, so nvim opens immediately rather than waiting on a build.
+# Only on creation: an existing worktree has already been through this.
+SETUP_HOOK="$HOME/.config/worktree-setup/$REPO_NAME.sh"
+if [ -f "$SETUP_HOOK" ]; then
+    SETUP_LOG="$HOME/.cache/worktree-setup/$REPO_NAME-$SESSION_NAME.log"
+    mkdir -p "$(dirname "$SETUP_LOG")"
+    # setsid detaches it from this script's session, so it survives both the
+    # script exiting and the terminal it was launched from going away.
+    setsid bash -c '
+        cd "$1" || exit 1
+        echo "=== $(date): $2"
+        bash "$2"
+        # Capture before the $(date) below, whose own status would clobber it.
+        rc=$?
+        echo "=== $(date): exit $rc"
+    ' _ "$WORKTREE_DIR" "$SETUP_HOOK" >"$SETUP_LOG" 2>&1 < /dev/null &
+    info "Running $SETUP_HOOK in the background; log: $SETUP_LOG"
+fi
+
 # Create tmux session for new worktree
 if [ -n "$TMUX" ]; then
     info "Creating new session: $SESSION_NAME"

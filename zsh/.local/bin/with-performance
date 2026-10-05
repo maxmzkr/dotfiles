@@ -1,0 +1,18 @@
+#!/bin/bash
+# Run a command with the CPU power profile pinned to performance, then restore
+# whatever it was. power-profiles-daemon accepts this from the active session's
+# user over polkit, so no root -- writing scaling_governor in sysfs would need it.
+#
+#   with-performance go test ./...
+#   with-performance git rebase main --exec ./verify.sh
+set -u
+if ! command -v powerprofilesctl >/dev/null; then exec "$@"; fi
+
+previous=$(powerprofilesctl get 2>/dev/null) || previous=""
+restore() {
+  [ -n "$previous" ] && [ "$previous" != performance ] && powerprofilesctl set "$previous" 2>/dev/null
+}
+trap 'restore' EXIT INT TERM
+
+[ -n "$previous" ] && powerprofilesctl set performance 2>/dev/null
+"$@"
