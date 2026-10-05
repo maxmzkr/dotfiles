@@ -56,6 +56,17 @@ package rather than split across the two.
   `unittest`, no pytest — they drive real repos in temp dirs). Run it against the
   stowed `~/.claude/hooks/`, not this package, or the `pr_body_check` tests are
   missing.
+- `.claude/statusline.sh` — the status line, registered under `statusLine` in
+  `settings.json` by absolute path like the hooks. It exists for the **context
+  gauge**: `context_window.used_percentage` from the status JSON, colored green /
+  yellow / red at 50% and 80% so a filling window is visible without running
+  `/context`, plus the token counts it came from and the cwd and model for
+  orientation. Everything is one `jq` program over stdin — no `git` or other
+  subprocess, because this runs on every render. The percentage is `null` until the
+  first API response of a session, which is why the no-messages case prints `ctx
+  --` rather than `0%`; `context_window_size` is read from the payload rather than
+  assumed, so a `[1m]` session shows `/1M` and not `/200k`. Unlike a missing hook, a
+  broken status line only blanks the line.
 - `.claude/CLAUDE.md` — user-level instructions loaded in every project (Go test
   conventions and the no-attribution-trailer rule live here). Distinct from this
   file, which stows to `~/CLAUDE.md` and documents the package.
@@ -65,14 +76,22 @@ package rather than split across the two.
   `bell.oga` vs `window-attention.oga`, so "done" and "blocked" are
   distinguishable without looking — and set the tmux session option
   `@claude_waiting`, which `tmux/.tmux.conf` renders in `status-right` for every
-  session at once. `UserPromptSubmit` and `SessionStart` clear it, so the marker
-  survives you switching into the session and only goes away when you actually
-  reply (`SessionStart` covers a crashed session leaving a stale flag). These are
+  session at once. `UserPromptSubmit` and `SessionStart` clear it, and
+  `tmux/.tmux.conf`'s `client-session-changed` hook clears it on switching into the
+  session, so the marker goes away as soon as you've looked — the hooks here are
+  what cover replying without ever leaving the session (`SessionStart` also covers
+  a crashed session leaving a stale flag). These are
   inline shell one-liners rather than files in `hooks/` on purpose: each is
-  `[ -n "$TMUX_PANE" ] && tmux ... 2>/dev/null; true`, which cannot fail, whereas a
+  `[ -n "$p" ] && tmux ... 2>/dev/null; true`, which cannot fail, whereas a
   missing script on `UserPromptSubmit` would reject the prompt — the same fragility
   the absolute paths above have. `TMUX_PANE` is inherited from the pane Claude Code
   was started in, so each session flags itself with no bookkeeping.
+
+  The pane is `${CLAUDE_TMUX_PANE:-$TMUX_PANE}`, not `$TMUX_PANE` alone, for
+  sessions launched from inside nvim: `neovim/`'s sidekick config clears `TMUX` and
+  `TMUX_PANE` so claude doesn't wrap OSC 52 in tmux's DCS passthrough, and passes
+  the pane id under `CLAUDE_TMUX_PANE` instead. Without the fallback those sessions
+  chime but never light up `status-right`.
 
 Everything else in `~/.claude/` — session transcripts, `file-history/`,
 `shell-snapshots/` — is machine-local churn (~280MB) and deliberately not tracked.

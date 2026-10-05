@@ -6,9 +6,9 @@ One file per plugin override or addition. Each returns a lazy.nvim spec table (o
 
 - `avante.lua` — avante.nvim. Disabled (`enabled = false`); superseded by `sidekick.lua`.
 - `codecompanion.lua` — CodeCompanion (LLM chat/inline/CLI) routed through a local Bifrost proxy. Disabled (`enabled = false`); superseded by `sidekick.lua`.
-- `sidekick.lua` — sidekick.nvim CLI integration (active AI plugin). Two Claude tool profiles: `claude` (`<leader>aa`, subscription — clears ambient `ANTHROPIC_*` vars) and `claude-bifrost` (`<leader>ab`, routes through the Bifrost proxy via `~/.config/bifrost/credentials.json`). `<leader>aa` also auto-opens on blank launch. NES disabled (no Copilot sub).
+- `sidekick.lua` — sidekick.nvim CLI integration (active AI plugin). Two Claude tool profiles: `claude` (`<leader>aa`, subscription — clears ambient `ANTHROPIC_*` vars) and `claude-bifrost` (`<leader>ab`, routes through the Bifrost proxy via `~/.config/bifrost/credentials.json`). `<leader>aa` also auto-opens on blank launch. NES enabled (default) -- needs `copilot-language-server` and a GitHub Copilot entitlement; `:LspCopilotSignIn` to authenticate.
 - `colorscheme.lua` — `solarized.nvim`, light background.
-- `copilot.lua` — copilot.lua + CopilotChat.nvim. Disabled (`enabled = false`); the `ai.copilot`/`ai.copilot-chat` LazyVim extras are also removed from `lazyvim.json`.
+- `copilot.lua` — copilot.lua + CopilotChat.nvim. Disabled (`enabled = false`); the `ai.copilot`/`ai.copilot-chat` LazyVim extras are also removed from `lazyvim.json`. Keep it that way even with a Copilot entitlement: copilot.lua bundles its own copy of `copilot-language-server` and would displace the lspconfig-managed one that `sidekick.lua`'s NES attaches to. Re-enable it only if inline ghost text is wanted alongside NES.
 - `mcphub.lua` — MCPHub plugin with `<leader>am` keymap; wires it into CodeCompanion as an extension.
 - `dap-python.lua` — `<leader>dn/df/ds` for nvim-dap-python test/debug actions.
 - `fugitive.lua` — vim-fugitive + vim-rhubarb, loaded on `BufWinEnter`.

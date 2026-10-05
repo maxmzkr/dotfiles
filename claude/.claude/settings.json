@@ -14,7 +14,7 @@
           },
           {
             "type": "command",
-            "command": "[ -n \"$TMUX_PANE\" ] && tmux set-option -t \"$TMUX_PANE\" @claude_waiting 1 2>/dev/null; true",
+            "command": "p=\"${CLAUDE_TMUX_PANE:-$TMUX_PANE}\"; [ -n \"$p\" ] && tmux set-option -t \"$p\" @claude_waiting 1 2>/dev/null; true",
             "async": true
           }
         ]
@@ -30,7 +30,7 @@
           },
           {
             "type": "command",
-            "command": "[ -n \"$TMUX_PANE\" ] && tmux set-option -t \"$TMUX_PANE\" @claude_waiting 1 2>/dev/null; true",
+            "command": "p=\"${CLAUDE_TMUX_PANE:-$TMUX_PANE}\"; [ -n \"$p\" ] && tmux set-option -t \"$p\" @claude_waiting 1 2>/dev/null; true",
             "async": true
           }
         ]
@@ -46,7 +46,12 @@
           },
           {
             "type": "command",
-            "command": "[ -n \"$TMUX_PANE\" ] && tmux set-option -u -t \"$TMUX_PANE\" @claude_waiting 2>/dev/null; true"
+            "command": "python3 -S /home/max/.claude/hooks/skill_triggers.py",
+            "timeout": 10
+          },
+          {
+            "type": "command",
+            "command": "p=\"${CLAUDE_TMUX_PANE:-$TMUX_PANE}\"; [ -n \"$p\" ] && tmux set-option -u -t \"$p\" @claude_waiting 2>/dev/null; true"
           }
         ]
       }
@@ -61,7 +66,7 @@
           },
           {
             "type": "command",
-            "command": "[ -n \"$TMUX_PANE\" ] && tmux set-option -u -t \"$TMUX_PANE\" @claude_waiting 2>/dev/null; true"
+            "command": "p=\"${CLAUDE_TMUX_PANE:-$TMUX_PANE}\"; [ -n \"$p\" ] && tmux set-option -u -t \"$p\" @claude_waiting 2>/dev/null; true"
           }
         ]
       }
@@ -84,16 +89,32 @@
             "command": "python3 -S /home/max/.claude/hooks/commit_trailer_check.py"
           }
         ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "f=/home/max/.claude/hooks/bq_project_check.py; [ -f \"$f\" ] && python3 -S \"$f\"; true"
+          }
+        ]
       }
     ]
   },
+  "statusLine": {
+    "type": "command",
+    "command": "/home/max/.claude/statusline.sh",
+    "padding": 0
+  },
   "enabledPlugins": {
     "gopls-lsp@claude-plugins-official": true,
-    "superpowers@claude-plugins-official": true
+    "superpowers@claude-plugins-official": true,
+    "pyright-lsp@claude-plugins-official": true
   },
   "effortLevel": "medium",
   "tui": "fullscreen",
   "theme": "light",
   "preferredNotifChannel": "notifications_disabled",
-  "useAutoModeDuringPlan": true
+  "useAutoModeDuringPlan": true,
+  "skipWorkflowUsageWarning": true
 }

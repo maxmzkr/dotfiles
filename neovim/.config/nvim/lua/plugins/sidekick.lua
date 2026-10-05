@@ -16,9 +16,29 @@ return {
 	{
 		"folke/sidekick.nvim",
 		opts = {
-			-- no Copilot subscription; NES rides on the Copilot LSP, so keep it off
-			nes = { enabled = false },
+			-- NES is left at its default (enabled). It rides on the Copilot LSP's
+			-- `textDocument/copilotInlineEdit`, a GitHub-only method, so it needs a
+			-- Copilot entitlement -- the free tier covers it. LazyVim's ai.sidekick
+			-- extra registers `servers.copilot` only when nes.enabled is not false,
+			-- and that registration is what makes mason install
+			-- copilot-language-server. Setting it back to false silently uninstalls
+			-- the server, so this stays absent rather than being written out as true.
+			--
+			-- copilot.lua stays disabled in copilot.lua: it bundles its own copy of
+			-- the same LSP and would displace the lspconfig-managed one, and its
+			-- inline ghost text isn't wanted -- NES is the whole point here.
 			cli = {
+				win = {
+					keys = {
+						-- Sidekick's buffer picker defaults to `<c-b>` in mode "nt",
+						-- so in the terminal it swallows the key before claude sees
+						-- it. Claude binds `<c-b>` itself (run the current tool call
+						-- in the background), and a buffer picker is reachable from
+						-- any other window; the picker stays on `<c-b>` in normal
+						-- mode, where nothing competes for it.
+						buffers = { mode = "n" },
+					},
+				},
 				tools = {
 					-- Regular Claude on my Anthropic subscription. The ambient
 					-- environment sometimes carries Bifrost's ANTHROPIC_* vars
@@ -32,6 +52,7 @@ return {
 							-- See TMUX note below.
 							TMUX = false,
 							TMUX_PANE = false,
+							CLAUDE_TMUX_PANE = vim.env.TMUX_PANE,
 						},
 					},
 					-- Same claude binary, routed through the Bifrost proxy. Use when
@@ -44,6 +65,7 @@ return {
 							ANTHROPIC_AUTH_TOKEN = false,
 							TMUX = false,
 							TMUX_PANE = false,
+							CLAUDE_TMUX_PANE = vim.env.TMUX_PANE,
 						},
 					},
 					-- TMUX/TMUX_PANE are cleared because nvim runs inside tmux and the
@@ -57,6 +79,14 @@ return {
 					-- OSC 52, which nvim's terminal does understand and turns into a
 					-- real clipboard write. Enabling `cli.mux.backend` would put claude
 					-- in an actual tmux pane and this would have to go.
+					--
+					-- CLAUDE_TMUX_PANE carries the pane id back in under a name nothing
+					-- but the waiting-notifier hooks in ~/.claude/settings.json reads, so
+					-- the status-right marker still lights up for nvim-hosted sessions
+					-- without claude believing it is under tmux. It is nil when nvim
+					-- itself is not in tmux, which just leaves the var unset. With TMUX
+					-- cleared too, `tmux set-option` talks to the default socket rather
+					-- than the inherited one — fine with a single tmux server.
 				},
 			},
 		},

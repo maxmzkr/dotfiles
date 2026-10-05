@@ -10,9 +10,9 @@ Highlights:
   *every* session through `#{S:...}` so any session can see which others want you —
   `@cc_done` (`✓`, set from nvim when CodeCompanion finishes) and `@claude_waiting`
   (`✻`, set from Claude Code's `Stop`/`Notification` hooks in `~/.claude/settings.json`,
-  cleared on `UserPromptSubmit`/`SessionStart`). `client-session-changed`
-  clears only `@cc_done` — switching in means you saw it, whereas a Claude session keeps
-  advertising until you actually reply.
+  cleared on `UserPromptSubmit`/`SessionStart`). `client-session-changed` clears both —
+  switching in means you saw it; the Claude-side hooks are what clear the `✻` when you
+  reply without leaving the session.
 - Solarized-light theme via `tmux-colors-solarized`
 - TPM plugins: tpm, tmux-sensible, tmux-fzf, tmux-colors-solarized
 - `prefix S` runs the tmux-fzf session picker
