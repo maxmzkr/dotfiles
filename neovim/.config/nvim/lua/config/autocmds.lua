@@ -120,3 +120,42 @@ vim.api.nvim_create_autocmd("FileType", {
 		end, { buffer = args.buf, desc = "Open file under cursor in other split" })
 	end,
 })
+
+-- Re-do the clipboard write for OSC 52 from a :terminal buffer. nvim decodes
+-- the payload but hands the system clipboard Vim's *internal* register form,
+-- where a line break is a NUL byte -- so a multi-line copy arrives
+-- NUL-separated and every consumer stops at the first one. Byte counts match
+-- end to end, which is what makes it look like nothing is wrong until you
+-- paste. Measured on v0.13.0-dev-602: identical at 200B and 20KB, so it is not
+-- a payload limit.
+--
+-- This bites claude in sidekick specifically, because that is the one place it
+-- copies over OSC 52 at all: on a local session it shells out to wl-copy
+-- itself, and plugins/sidekick.lua clears TMUX so the sequence goes out
+-- unwrapped (see the note there for what the DCS-wrapped version does to the
+-- screen). So the selection you drag in claude pastes as its first line only.
+--
+-- tmux-copy rather than wl-copy directly: it picks the backend from whichever
+-- display server the attached tmux client is using, which is the same reason
+-- .tmux.conf pipes through it instead of hardcoding one.
+vim.api.nvim_create_autocmd("TermRequest", {
+	group = augroup("osc52_clipboard_repair"),
+	callback = function(ev)
+		local sequence = (ev.data and ev.data.sequence) or vim.v.termrequest or ""
+		-- OSC 52 is `ESC ] 52 ; <targets> ; <base64> <terminator>`. Only the
+		-- clipboard write is interesting; a `?` payload is a read request.
+		local encoded = sequence:match("^\27%]52;[^;]*;(.*)$")
+		if not encoded or encoded == "?" then
+			return
+		end
+		-- BEL, ST, or a bare ESC depending on who emitted it.
+		encoded = encoded:gsub("\27\\$", ""):gsub("[\7\27]+$", "")
+
+		local ok, text = pcall(vim.base64.decode, encoded)
+		if not ok or text == "" then
+			return
+		end
+
+		vim.fn.system({ vim.fn.expand("~/.local/bin/tmux-copy") }, text)
+	end,
+})
