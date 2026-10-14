@@ -9,7 +9,10 @@ description: >-
   register. Triggers on "capture my comments", "learn from these edits", "what
   would I have written here", or immediately after a rebase stop's edits land.
   Also use when Max has edited a PR description on GitHub ("I rewrote the
-  description", "capture my PR edits"), and before drafting any PR body.
+  description", "capture my PR edits"), and before drafting any PR body. Also
+  use right after Max finishes a rebase where he reworded commit messages ("I
+  reworded the commits", "capture my commit messages"), and before writing or
+  rewriting any commit message.
 ---
 
 # Learning comment voice
@@ -152,10 +155,44 @@ Then run steps 3-7 above on `/tmp/pr-candidates.json`, with these differences:
   them belongs in `writing-pr-descriptions`, proposed rather than added, not in
   the comment rulebook.
 
+## Capture: commit messages
+
+Run this when Max says he has finished a rebase in which he reworded commits. Run
+it before any other rebase in that repository: only the latest rebase session is
+read.
+
+Claude rewrites a message with `git commit --amend -F`, which the reflog logs as
+`commit (amend)`. A `reword` stop opens his editor and logs `rebase (reword)`, so
+those entries are his. `voice_commit.py` pairs each with the commit it rewrote, by
+patch id in the branch as it was before the rebase, and diffs the two messages
+paragraph by paragraph; the subject line counts as a paragraph.
+
+```bash
+python3 ~/.claude/skills/learning-comment-voice/scripts/voice_commit.py \
+    --repo-dir <repo> --out /tmp/commit-candidates.json
+```
+
+Then run steps 3-7 above on `/tmp/commit-candidates.json`, with these differences:
+
+- The describing subagent gets the candidate's `code` — the commit's changed
+  files — never the message, and describes what the change does.
+- `commit` is the candidate's own `commit` field; `enclosing` is `None`.
+- Deleted paragraphs are the draft he cut. Report them in step 7; a pattern among
+  them is a commit-message convention, proposed rather than added, not a comment
+  rule.
+
+A message he amends outside a rebase (`git commit --amend` in his editor) logs the
+same `commit (amend)` as Claude's and cannot be told apart, so it is not captured.
+Ask him to reword through `git rebase -i` when the wording should be learned.
+
 ## Query
 
 Before drafting a PR body, run step 2 below with `--placement pr-body
 --language markdown` and a one-line situation describing the change.
+
+Before writing or rewriting a commit message, run step 2 below with
+`--placement commit-message --language text` and a one-line situation describing
+what the commit changes.
 
 Before writing or rewriting a comment:
 

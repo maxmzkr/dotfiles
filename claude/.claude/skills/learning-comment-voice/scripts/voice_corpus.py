@@ -20,7 +20,7 @@ import json
 import os
 from pathlib import Path
 
-PLACEMENTS = ("doc", "block", "trailing", "pr-body")
+PLACEMENTS = ("doc", "block", "trailing", "pr-body", "commit-message")
 KINDS = ("why", "warning", "contract", "domain", "pointer")
 
 STATS_NAME = "_stats.jsonl"
