@@ -31,6 +31,12 @@ package rather than split across the two.
     `references/rules.md` and deletes or tightens the ones that restate the code.
     It never touches a comment on an unchanged line, so a review can't grow the
     diff, and the rulebook gains a rule only when Max endorses one.
+  - `driving-a-pr-to-review` ("hand hold") takes a PR from pushed to reviewers
+    pinged, strictly in order: CI green, out of draft, reviewers verified, then the
+    Slack ask. `pr-ready.sh` is the gate for the first three, because the failure it
+    prevents is being handed only the last two steps. Its `references/` — the
+    name-to-handle directory and the repo's non-Actions checks — are work-private and
+    absent here; the skill creates the directory on its first miss.
 - `.claude/hooks/` — hook scripts, registered in `settings.json` by **absolute
   path**, so this package must be stowed before Claude Code runs — a missing hook
   file makes every `Bash` call fail, not just the writes it guards.
