@@ -27,6 +27,10 @@ package rather than split across the two.
     verification section covers the three ways a `git rebase --exec` harness
     reports success without proving anything.
   - `gh-stack` drives the `gh-stack` CLI extension for stacked branches and PRs.
+  - `review-comments` judges every comment a diff adds against
+    `references/rules.md` and deletes or tightens the ones that restate the code.
+    It never touches a comment on an unchanged line, so a review can't grow the
+    diff, and the rulebook gains a rule only when Max endorses one.
 - `.claude/hooks/` — hook scripts, registered in `settings.json` by **absolute
   path**, so this package must be stowed before Claude Code runs — a missing hook
   file makes every `Bash` call fail, not just the writes it guards.
