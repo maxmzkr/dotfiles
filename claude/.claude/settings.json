@@ -14,8 +14,7 @@
           },
           {
             "type": "command",
-            "command": "p=\"${CLAUDE_TMUX_PANE:-$TMUX_PANE}\"; [ -n \"$p\" ] && tmux set-option -t \"$p\" @claude_waiting 1 2>/dev/null; true",
-            "async": true
+            "command": "p=\"${CLAUDE_TMUX_PANE:-$TMUX_PANE}\"; [ -n \"$p\" ] && tmux set -p -t \"$p\" @claude_state done \\; set -p -t \"$p\" @claude_since \"$(date +%s)\" 2>/dev/null; true"
           }
         ]
       }
@@ -27,11 +26,15 @@
             "type": "command",
             "command": "paplay --volume=49152 /usr/share/sounds/freedesktop/stereo/window-attention.oga 2>/dev/null || true",
             "async": true
-          },
+          }
+        ]
+      },
+      {
+        "matcher": "permission_prompt",
+        "hooks": [
           {
             "type": "command",
-            "command": "p=\"${CLAUDE_TMUX_PANE:-$TMUX_PANE}\"; [ -n \"$p\" ] && tmux set-option -t \"$p\" @claude_waiting 1 2>/dev/null; true",
-            "async": true
+            "command": "p=\"${CLAUDE_TMUX_PANE:-$TMUX_PANE}\"; [ -n \"$p\" ] && tmux set -p -t \"$p\" @claude_state permission \\; set -p -t \"$p\" @claude_since \"$(date +%s)\" 2>/dev/null; true"
           }
         ]
       }
@@ -51,7 +54,7 @@
           },
           {
             "type": "command",
-            "command": "p=\"${CLAUDE_TMUX_PANE:-$TMUX_PANE}\"; [ -n \"$p\" ] && tmux set-option -u -t \"$p\" @claude_waiting 2>/dev/null; true"
+            "command": "p=\"${CLAUDE_TMUX_PANE:-$TMUX_PANE}\"; [ -n \"$p\" ] && tmux set -p -t \"$p\" @claude_state working \\; set -p -t \"$p\" @claude_since \"$(date +%s)\" 2>/dev/null; true"
           }
         ]
       }
@@ -66,7 +69,7 @@
           },
           {
             "type": "command",
-            "command": "p=\"${CLAUDE_TMUX_PANE:-$TMUX_PANE}\"; [ -n \"$p\" ] && tmux set-option -u -t \"$p\" @claude_waiting 2>/dev/null; true"
+            "command": "p=\"${CLAUDE_TMUX_PANE:-$TMUX_PANE}\"; [ -n \"$p\" ] && tmux set -p -t \"$p\" @claude_state idle \\; set -p -t \"$p\" @claude_since \"$(date +%s)\" 2>/dev/null; true"
           }
         ]
       }
@@ -96,6 +99,46 @@
           {
             "type": "command",
             "command": "f=/home/max/.claude/hooks/bq_project_check.py; [ -f \"$f\" ] && python3 -S \"$f\"; true"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "p=\"${CLAUDE_TMUX_PANE:-$TMUX_PANE}\"; [ -n \"$p\" ] && tmux if -F -t \"$p\" \"#{!=:#{@claude_state},working}\" \"set -p -t $p @claude_state working ; set -p -t $p @claude_since $(date +%s)\" 2>/dev/null; true"
+          }
+        ]
+      }
+    ],
+    "PostToolUseFailure": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "p=\"${CLAUDE_TMUX_PANE:-$TMUX_PANE}\"; [ -n \"$p\" ] && tmux if -F -t \"$p\" \"#{!=:#{@claude_state},working}\" \"set -p -t $p @claude_state working ; set -p -t $p @claude_since $(date +%s)\" 2>/dev/null; true"
+          }
+        ]
+      }
+    ],
+    "StopFailure": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "p=\"${CLAUDE_TMUX_PANE:-$TMUX_PANE}\"; [ -n \"$p\" ] && tmux set -p -t \"$p\" @claude_state done \\; set -p -t \"$p\" @claude_since \"$(date +%s)\" 2>/dev/null; true"
+          }
+        ]
+      }
+    ],
+    "SessionEnd": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "p=\"${CLAUDE_TMUX_PANE:-$TMUX_PANE}\"; [ -n \"$p\" ] && tmux set -p -u -t \"$p\" @claude_state \\; set -p -u -t \"$p\" @claude_since 2>/dev/null; true"
           }
         ]
       }

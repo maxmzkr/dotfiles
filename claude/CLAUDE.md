@@ -75,27 +75,34 @@ package rather than split across the two.
   conventions and the no-attribution-trailer rule live here). Distinct from this
   file, which stows to `~/CLAUDE.md` and documents the package.
 - `.claude/settings.json` — shared settings. `settings.local.json` stays untracked.
-  Beyond the script hooks above it carries the **waiting notifier**: `Stop` (turn
-  ended) and `Notification` (permission request or idle) each play a sound —
-  `bell.oga` vs `window-attention.oga`, so "done" and "blocked" are
-  distinguishable without looking — and set the tmux session option
-  `@claude_waiting`, which `tmux/.tmux.conf` renders in `status-right` for every
-  session at once. `UserPromptSubmit` and `SessionStart` clear it, and
-  `tmux/.tmux.conf`'s `client-session-changed` hook clears it on switching into the
-  session, so the marker goes away as soon as you've looked — the hooks here are
-  what cover replying without ever leaving the session (`SessionStart` also covers
-  a crashed session leaving a stale flag). These are
-  inline shell one-liners rather than files in `hooks/` on purpose: each is
-  `[ -n "$p" ] && tmux ... 2>/dev/null; true`, which cannot fail, whereas a
-  missing script on `UserPromptSubmit` would reject the prompt — the same fragility
-  the absolute paths above have. `TMUX_PANE` is inherited from the pane Claude Code
-  was started in, so each session flags itself with no bookkeeping.
+  Beyond the script hooks above it carries the **session-state hooks** behind the
+  kitty sidebar (`kitty/.config/kitty/claude_sidebar/`, toggled with
+  `ctrl+shift+b`). Each sets two tmux **pane** options on the pane Claude runs in:
+  `@claude_state` and `@claude_since`, the epoch seconds it entered that state.
+  `SessionStart` → `idle`, `UserPromptSubmit` → `working`, `Notification` matched
+  on `permission_prompt` → `permission`, `Stop`/`StopFailure` → `done`,
+  `SessionEnd` unsets both. `PostToolUse`/`PostToolUseFailure` set `working` only
+  when the state differs, which is what moves a pane out of `permission` once a
+  tool is approved without resetting the clock on every tool call. The matcher on
+  `Notification` keeps the 60s idle reminder from overwriting `done`. Pane rather
+  than session options so two Claudes in one session are two rows, and a closed
+  pane takes its state with it. No hook fires on Esc or on a denied permission, so
+  an interrupted pane keeps its old state until its next prompt; the sidebar's
+  right-click (mark read → `idle`) is the way out.
+
+  `Stop` and `Notification` also play a sound — `bell.oga` vs
+  `window-attention.oga`, so "done" and "blocked" are distinguishable without
+  looking. The state hooks are inline shell one-liners rather than files in
+  `hooks/` on purpose: each is `[ -n "$p" ] && tmux ... 2>/dev/null; true`, which
+  cannot fail, whereas a missing script on `UserPromptSubmit` would reject the
+  prompt — the same fragility the absolute paths above have. They run
+  synchronously, so a `Stop` can't land before the `PostToolUse` that preceded it.
 
   The pane is `${CLAUDE_TMUX_PANE:-$TMUX_PANE}`, not `$TMUX_PANE` alone, for
   sessions launched from inside nvim: `neovim/`'s sidekick config clears `TMUX` and
   `TMUX_PANE` so claude doesn't wrap OSC 52 in tmux's DCS passthrough, and passes
   the pane id under `CLAUDE_TMUX_PANE` instead. Without the fallback those sessions
-  chime but never light up `status-right`.
+  never show up in the sidebar.
 
 Everything else in `~/.claude/` — session transcripts, `file-history/`,
 `shell-snapshots/` — is machine-local churn (~280MB) and deliberately not tracked.

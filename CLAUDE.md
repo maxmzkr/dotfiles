@@ -20,7 +20,20 @@ Files inside a package directory keep their leading dot (`.zshrc`, `.config/`, `
 - `git/` — global git config (`~/.gitconfig`)
 - `gitwork/` — work-only git overrides, included from `~/.gitconfig`
 - `golangci-lint/` — `~/.golangci.yaml`
-- `kitty/` — kitty terminal config (`~/.config/kitty/kitty.conf`)
+- `kitty/` — kitty terminal config (`~/.config/kitty/kitty.conf`), plus the Claude
+  session sidebar in `.config/kitty/claude_sidebar/`: `ctrl+shift+b` opens a 28-column
+  split on the left listing every Claude Code instance in tmux by state — read
+  (`·`) first, then needs-permission (`⚠`), done (`✓`), working (`⋯`). Left-click
+  switches *that kitty window's* tmux client to the pane (the toggle hands the
+  sidebar its window's tty); right-click or `r` marks a row read. State comes from
+  pane options the hooks in `~/.claude/settings.json` set. `toggle.py` is a kitten
+  running inside kitty, so remote control stays off. Tests: `python3 -m unittest`
+  in that directory.
+
+  The sidebar times its refresh with `select()` rather than curses' `timeout`, and
+  takes every mouse event rather than button 1 alone: ncurses discards an event
+  outside the mouse mask and then blocks for input with no timeout, which froze the
+  display until the next click.
 - `mcphub/` — mcphub.nvim MCP server registry (`~/.config/mcphub/servers.json`). No secrets or internal
   hostnames live here: values are `${cmd: ...}` placeholders that mcp-hub resolves at launch (it resolves
   them in `env`, `args`, `command`, `url`, `headers`, `cwd`). The `bifrost` server reads both its
