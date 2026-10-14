@@ -14,6 +14,7 @@ local function override_diff_highlights()
     -- diffview file panel additions
     DiffviewDiffAddAsDelete = { bg = "#f4d4d0" },
     DiffviewDiffDelete = { fg = "#93a1a1", bg = "NONE" },
+    DiffviewDiffTextAsDelete = { bg = "#ffd0c2", fg = "NONE", bold = true },
     -- octo review panes link DiffText to these per-window; upstream defaults are
     -- GitHub's dark green/red, dark enough to need white fg. Stay at the same
     -- lightness as the line backgrounds above and get the emphasis from
